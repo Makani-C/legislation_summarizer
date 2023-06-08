@@ -1,5 +1,7 @@
 import psycopg2
 
+from database_connection import RDS
+
 # RDS database connection details
 host = "legislation-database.cz3q8p7r1eqy.us-west-2.rds.amazonaws.com"
 port = 5432
@@ -23,23 +25,16 @@ create_table_query = """
 """
 
 try:
-    # Connect to the PostgreSQL database
-    connection = psycopg2.connect(
+    rds_db = RDS(
         host=host,
         port=port,
-        database=database,
         user=user,
-        password=password
+        password=password,
+        database=database
     )
-    cursor = connection.cursor()
 
     # Execute the create table query
-    cursor.execute(create_table_query)
-    connection.commit()
-
-    # Close the database connection
-    cursor.close()
-    connection.close()
+    rds_db.execute_query(create_table_query)
 
     print("The 'bills' table was created successfully!")
 
