@@ -1,6 +1,12 @@
+import logging
+
 from datetime import datetime
 from configparser import ConfigParser
 from database_connection import LocalMariaDB, RDS
+
+# Configure logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 # Read configuration file
 config = ConfigParser()
@@ -59,9 +65,10 @@ def parse_data():
         query = f"SELECT MAX(updated_at) FROM {rds_table}"
         result = rds_db.execute_query(query)
         last_pull_timestamp = result[0][0] if result[0][0] is not None else datetime.min
+        print(last_pull_timestamp)
 
         # Read data from MariaDB that has been updated since the last pull
-        maria_query = f"SELECT {', '.join(maria_columns)} FROM {maria_table} WHERE updated > %s"
+        maria_query = f"SELECT {', '.join(maria_columns)} FROM {maria_table} WHERE updated > %s LIMIT 10"
         maria_data = maria_db.execute_query(maria_query, (last_pull_timestamp,))
 
         # Save data to Postgres RDS

@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 
 
@@ -60,12 +60,12 @@ class RDS(DatabaseConnector):
         self.port = port
 
     def get_connection_string(self):
-        return f"mysql+pymysql://{self.user}:{self.password}@{self.host}:{self.port}/{self.database}"
+        return f"postgresql://{self.user}:{self.password}@{self.host}:{self.port}/{self.database}"
 
     def get_database_type(self):
         return "Amazon RDS"
 
     @DatabaseConnector.connection_required
     def execute_query(self, query):
-        result = self.session.execute(query)
+        result = self.session.execute(text(query))
         return result.fetchall()
