@@ -1,1 +1,6 @@
-# legislation_summarizer
+# Legislation Summarizer
+
+## Database Connector / Main Pipeline
+
+## ChatGPT Interface
+
