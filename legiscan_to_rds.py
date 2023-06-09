@@ -1,6 +1,5 @@
 import logging
 import traceback
-
 from datetime import datetime
 from configparser import ConfigParser
 from sqlalchemy import text
