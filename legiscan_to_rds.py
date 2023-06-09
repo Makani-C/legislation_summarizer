@@ -81,7 +81,7 @@ def parse_data():
             INSERT INTO {rds_table} ({', '.join(rds_columns)})
             VALUES (
                 :bill_id, :state_code, :session_id, :body_id, :status_id, :pdf_link, 
-                :text, :summary_text, :updated_at::TIMESTAMP
+                :text, :summary_text, :updated_at
             )
             ON CONFLICT (bill_id) DO UPDATE
             SET (
