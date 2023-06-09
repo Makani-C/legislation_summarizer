@@ -57,7 +57,7 @@ maria_columns = [
 
 rds_table = "bills"
 rds_columns = [
-    "bill_id", "state_code", "session_id", "body_id", "status_id",
+    "bill_id", "state_code:q", "session_id", "body_id", "status_id",
     "pdf_link", "text", "summary_text", "updated_at"
 ]
 
@@ -80,16 +80,16 @@ def parse_data():
         query_template = text(f"""
             INSERT INTO {rds_table} ({', '.join(rds_columns)})
             VALUES (
-                :bill_id, :state_code, :session_id, :body_id, :status_id, :pdf_link, 
-                :text, :summary_text, :updated_at
+                :bill_id, :state_code, :session_id, :body_id, :status_id, 
+                :pdf_link, :text, :summary_text, :updated_at
             )
             ON CONFLICT (bill_id) DO UPDATE
             SET (
                 state_code, session_id, body_id, status_id, 
-                state_url, text, summary_text, updated_at
+                pdf_link, text, summary_text, updated_at
             ) = (
                 :state_code, :session_id, :body_id, :status_id,
-                :text, :summary_text, :pdf_link, :updated_at
+                :pdf_link, :text, :summary_text, :updated_at
             )
         """)
 
