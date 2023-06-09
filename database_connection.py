@@ -49,20 +49,6 @@ class DatabaseConnector:
 
         return data
 
-    @connection_required
-    def execute_transaction(self, queries: list[tuple]):
-        if self.session._transaction is None or not self.session._transaction.is_active:
-            self.session.begin()
-        try:
-            for query, params in queries:
-                print(query)
-                print(params)
-                self.session.execute(text(query).bindparams(**params))
-            self.session.commit()
-        except Exception as e:
-            self.session.rollback()
-            raise e
-
 
 class MariaDBLocal(DatabaseConnector):
     def get_connection_string(self):
@@ -82,3 +68,15 @@ class PostgresRDS(DatabaseConnector):
 
     def get_database_type(self):
         return "Amazon RDS"
+
+    @DatabaseConnector.connection_required
+    def execute_transaction(self, queries: list[text]):
+        if self.session._transaction is None or not self.session._transaction.is_active:
+            self.session.begin()
+        try:
+            for query in queries:
+                self.session.execute(query)
+            self.session.commit()
+        except Exception as e:
+            self.session.rollback()
+            raise e
