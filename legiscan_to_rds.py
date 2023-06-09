@@ -3,6 +3,8 @@ import traceback
 
 from datetime import datetime
 from configparser import ConfigParser
+from sqlalchemy import text
+
 from database_connection import MariaDBLocal, PostgresRDS
 
 # Configure logging
@@ -75,7 +77,7 @@ def parse_data():
 
         # Save data to Postgres RDS
         queries = []
-        query_template = f"""
+        query_template = text(f"""
             INSERT INTO {rds_table} ({', '.join(rds_columns)})
             VALUES (
                 :bill_id, :state_code, :session_id, :body_id, :status_id, :pdf_link, 
@@ -89,7 +91,7 @@ def parse_data():
                 :state_code, :session_id, :body_id,
                 :status_id, :pdf_link, NOW()
             )
-        """
+        """)
         for row in maria_data:
             parsed_data = {
                 'bill_id': row["bill_id"],
@@ -102,7 +104,18 @@ def parse_data():
                 'summary_text': "",
                 'updated_at': datetime.now()
             }
-            queries.append((query_template, parsed_data))
+            query = query_template.bindparams(
+                bill_id=parsed_data['bill_id'],
+                state_code=parsed_data['state_code'],
+                session_id=parsed_data['session_id'],
+                body_id=parsed_data['body_id'],
+                status_id=parsed_data['status_id'],
+                pdf_link=parsed_data['pdf_link'],
+                text=parsed_data['text'],
+                summary_text=parsed_data['summary_text']
+            ).params(updated_at=parsed_data['updated_at'])
+
+            queries.append(query)
 
         # Execute the transaction
         rds_db.execute_transaction(queries)
