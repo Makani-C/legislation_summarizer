@@ -70,12 +70,12 @@ class PostgresRDS(DatabaseConnector):
         return "Amazon RDS"
 
     @DatabaseConnector.connection_required
-    def execute_transaction(self, queries: list[text]):
+    def execute_transaction(self, queries: list[tuple]):
         if self.session._transaction is None or not self.session._transaction.is_active:
             self.session.begin()
         try:
-            for query in queries:
-                self.session.execute(query)
+            for query, params in queries:
+                self.session.execute(query, params)
             self.session.commit()
         except Exception as e:
             self.session.rollback()

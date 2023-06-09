@@ -106,8 +106,7 @@ def parse_data():
                 'updated_at': datetime.now()
             }
 
-            query = query_template.params(parsed_data)
-            queries.append(query)
+            queries.append((query_template, parsed_data))
 
         # Execute the transaction
         rds_db.execute_transaction(queries)
