@@ -83,7 +83,7 @@ def parse_data():
                 'session_id': row["session_id"],
                 'body_id': row["body_id"],
                 'status_id': row["status_id"],
-                'pdf_link': rds_db.escape_string(row["state_url"]),
+                'pdf_link': row["state_url"],
                 'text': "",
                 'summary_text': "",
                 'updated_at': datetime.now()
