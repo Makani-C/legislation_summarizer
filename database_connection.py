@@ -50,7 +50,7 @@ class MariaDBLocal(DatabaseConnector):
 
     @DatabaseConnector.connection_required
     def execute_query(self, query, params=None):
-        result = self.session.execute(query, params)
+        result = self.session.execute(text(query), params)
         return result.fetchall()
 
 
@@ -67,5 +67,5 @@ class PostgresRDS(DatabaseConnector):
 
     @DatabaseConnector.connection_required
     def execute_query(self, query, params=None):
-        result = self.session.execute(text(query))
+        result = self.session.execute(text(query), params)
         return result.fetchall()
