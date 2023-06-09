@@ -68,7 +68,9 @@ def parse_data():
         last_pull_timestamp = result[0][0] if result[0][0] is not None else datetime.min
 
         # Read data from MariaDB that has been updated since the last pull
-        maria_query = f"SELECT {', '.join(maria_columns)} FROM {maria_table} WHERE updated > %s LIMIT 10"
+        maria_query = f"""
+          SELECT {', '.join(maria_columns)}  FROM {maria_table}
+          WHERE updated > '{last_pull_timestamp.strftime('%Y-%m-%d %H:%M:%S')}'"""
         maria_data = maria_db.execute_query(maria_query, (last_pull_timestamp,))
 
         # Save data to Postgres RDS
