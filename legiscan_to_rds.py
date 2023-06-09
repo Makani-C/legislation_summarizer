@@ -1,7 +1,11 @@
+import io
 import logging
+import requests
 import traceback
+
 from datetime import datetime
 from configparser import ConfigParser
+from PyPDF2 import PdfReader
 from sqlalchemy import text
 
 from database_connection import MariaDBLocal, PostgresRDS
@@ -92,6 +96,34 @@ def get_updated_data(last_pull_timestamp):
     return data
 
 
+def create_text_and_summary(data):
+    """
+    Create the 'text' and 'summary_text' values based on the data.
+
+    Args:
+        data (list): A list of dictionaries containing the data.
+
+    Returns:
+        list: A list of dictionaries with 'text' and 'summary_text' values added.
+    """
+    for row in data:
+        # Extract text from the PDF file using the provided URL
+        url = row["state_url"]
+        response = requests.get(url)
+        on_fly_mem_obj = io.BytesIO(response.content)
+        pdf_file = PdfReader(on_fly_mem_obj)
+
+        # Extract text from each page and concatenate into a single string
+        text = ""
+        for page in pdf_file.pages:
+            text += page.extract_text()
+
+        # Update the 'text' field in the dictionary
+        row["text"] = text
+        row["summary_text"] = ""  # Add your logic to create the 'summary_text' value
+    return data
+
+
 def save_data_to_rds(data):
     """
     Save the data to the RDS table.
@@ -135,16 +167,19 @@ def save_data_to_rds(data):
     rds_db.execute_transaction(queries)
 
 
-def parse_data():
+def run_data_pipeline():
     try:
         # Get the timestamp of the last pull
         last_pull_timestamp = get_last_pull_timestamp()
 
         # Get the updated data from MariaDB
-        maria_data = get_updated_data(last_pull_timestamp)
+        legiscan_data = get_updated_data(last_pull_timestamp)
+
+        # Create 'text' and 'summary_text' values
+        parsed_data = create_text_and_summary(legiscan_data)
 
         # Save the data to Postgres RDS
-        save_data_to_rds(maria_data)
+        save_data_to_rds(parsed_data)
 
     except Exception as e:
         # Get the traceback information
@@ -156,4 +191,4 @@ def parse_data():
 
 
 if __name__ == "__main__":
-    parse_data()
+    run_data_pipeline()
