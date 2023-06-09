@@ -85,11 +85,11 @@ def parse_data():
             )
             ON CONFLICT (bill_id) DO UPDATE
             SET (
-                state_abbr, session_id, body_id,
-                status_id, state_url, updated_at
+                state_code, session_id, body_id, status_id, 
+                state_url, text, summary_text, updated_at
             ) = (
-                :state_code, :session_id, :body_id,
-                :status_id, :pdf_link, NOW()
+                :state_code, :session_id, :body_id, :status_id,
+                :text, :summary_text, :pdf_link, :updated_at
             )
         """)
 
