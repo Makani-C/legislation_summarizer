@@ -71,7 +71,7 @@ def parse_data():
         maria_query = f"""
           SELECT {', '.join(maria_columns)}  FROM {maria_table}
           WHERE updated > '{last_pull_timestamp.strftime('%Y-%m-%d %H:%M:%S')}'"""
-        maria_data = maria_db.execute_query(maria_query, (last_pull_timestamp,))
+        maria_data = maria_db.execute_query(maria_query)
 
         # Save data to Postgres RDS
         for row in maria_data:
