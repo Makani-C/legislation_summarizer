@@ -8,7 +8,7 @@ from sqlalchemy import text
 from database_connection import MariaDBLocal, PostgresRDS
 
 # Configure logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 # Read configuration file
@@ -62,54 +62,90 @@ rds_columns = [
 ]
 
 
+def get_last_pull_timestamp():
+    """ Get the timestamp of the last pull from the RDS table.
+
+    Returns:
+        datetime.datetime: The last pull timestamp.
+    """
+    query = f"SELECT MAX(updated_at) FROM {rds_table}"
+    result = rds_db.execute_query(query)
+    last_pull_timestamp = result[0]["max"] or datetime.min
+
+    return last_pull_timestamp
+
+
+def get_updated_data(last_pull_timestamp):
+    """
+    Get the updated data from the MariaDB table.
+
+    Args:
+        last_pull_timestamp (datetime.datetime): The timestamp of the last pull.
+
+    Returns:
+        list: A list of dictionaries containing the updated data.
+    """
+    query = f"""
+        SELECT {', '.join(maria_columns)}  FROM {maria_table}
+        WHERE updated > '{last_pull_timestamp.strftime('%Y-%m-%d %H:%M:%S')}'"""
+    data = maria_db.execute_query(query)
+
+    return data
+
+
+def save_data_to_rds(data):
+    """
+    Save the data to the RDS table.
+
+    Args:
+        data (list): A list of dictionaries containing the data to be saved.
+    """
+    queries = []
+    query_template = text(f"""
+        INSERT INTO {rds_table} ({', '.join(rds_columns)})
+        VALUES (
+            :bill_id, :state_code, :session_id, :body_id, :status_id, 
+            :pdf_link, :text, :summary_text, :updated_at
+        )
+        ON CONFLICT (bill_id) DO UPDATE
+        SET (
+            state_code, session_id, body_id, status_id, 
+            pdf_link, text, summary_text, updated_at
+        ) = (
+            :state_code, :session_id, :body_id, :status_id,
+            :pdf_link, :text, :summary_text, :updated_at
+        )
+    """)
+
+    for row in data:
+        parsed_data = {
+            "bill_id": row["bill_id"],
+            "state_code": row["state_abbr"],
+            "session_id": row["session_id"],
+            "body_id": row["body_id"],
+            "status_id": row["status_id"],
+            "pdf_link": row["state_url"],
+            "text": "",
+            "summary_text": "",
+            "updated_at": datetime.now()
+        }
+
+        queries.append((query_template, parsed_data))
+
+    # Execute the transaction
+    rds_db.execute_transaction(queries)
+
+
 def parse_data():
     try:
-        # Read the timestamp of the last pull
-        query = f"SELECT MAX(updated_at) FROM {rds_table}"
-        result = rds_db.execute_query(query)
-        last_pull_timestamp = result[0]["max"] or datetime.min
+        # Get the timestamp of the last pull
+        last_pull_timestamp = get_last_pull_timestamp()
 
-        # Read data from MariaDB that has been updated since the last pull
-        maria_query = f"""
-          SELECT {', '.join(maria_columns)}  FROM {maria_table}
-          WHERE updated > '{last_pull_timestamp.strftime('%Y-%m-%d %H:%M:%S')}'"""
-        maria_data = maria_db.execute_query(maria_query)
+        # Get the updated data from MariaDB
+        maria_data = get_updated_data(last_pull_timestamp)
 
-        # Save data to Postgres RDS
-        queries = []
-        query_template = text(f"""
-            INSERT INTO {rds_table} ({', '.join(rds_columns)})
-            VALUES (
-                :bill_id, :state_code, :session_id, :body_id, :status_id, 
-                :pdf_link, :text, :summary_text, :updated_at
-            )
-            ON CONFLICT (bill_id) DO UPDATE
-            SET (
-                state_code, session_id, body_id, status_id, 
-                pdf_link, text, summary_text, updated_at
-            ) = (
-                :state_code, :session_id, :body_id, :status_id,
-                :pdf_link, :text, :summary_text, :updated_at
-            )
-        """)
-
-        for row in maria_data:
-            parsed_data = {
-                'bill_id': row["bill_id"],
-                'state_code': row["state_abbr"],
-                'session_id': row["session_id"],
-                'body_id': row["body_id"],
-                'status_id': row["status_id"],
-                'pdf_link': row["state_url"],
-                'text': "",
-                'summary_text': "",
-                'updated_at': datetime.now()
-            }
-
-            queries.append((query_template, parsed_data))
-
-        # Execute the transaction
-        rds_db.execute_transaction(queries)
+        # Save the data to Postgres RDS
+        save_data_to_rds(maria_data)
 
     except Exception as e:
         # Get the traceback information
