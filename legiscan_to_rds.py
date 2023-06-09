@@ -80,16 +80,16 @@ def parse_data():
         query_template = text(f"""
             INSERT INTO {rds_table} ({', '.join(rds_columns)})
             VALUES (
-                %(bill_id)s, %(state_code)s, %(session_id)s, %(body_id)s, %(status_id)s, %(pdf_link)s, 
-                %(text)s, %(summary_text)s, %(updated_at)s::TIMESTAMP
+                :bill_id, :state_code, :session_id, :body_id, :status_id, :pdf_link, 
+                :text, :summary_text, :updated_at::TIMESTAMP
             )
             ON CONFLICT (bill_id) DO UPDATE
             SET (
                 state_abbr, session_id, body_id,
                 status_id, state_url, updated_at
             ) = (
-                %(state_code)s, %(session_id)s, %(body_id)s,
-                %(status_id)s, %(pdf_link)s, NOW()
+                :state_code, :session_id, :body_id,
+                :status_id, :pdf_link, NOW()
             )
         """)
 
@@ -106,7 +106,7 @@ def parse_data():
                 'updated_at': datetime.now()
             }
 
-            query = query_template % parsed_data
+            query = query_template.params(parsed_data)
             queries.append(query)
 
         # Execute the transaction
