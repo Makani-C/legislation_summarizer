@@ -156,8 +156,8 @@ def save_data_to_rds(data):
             "body_id": row["body_id"],
             "status_id": row["status_id"],
             "pdf_link": row["state_url"],
-            "text": "",
-            "summary_text": "",
+            "text": row["text"],
+            "summary_text": row["summary_text"],
             "updated_at": datetime.now()
         }
 
@@ -175,7 +175,6 @@ def run_data_pipeline():
         # Get the updated data from MariaDB
         legiscan_data = get_updated_data(last_pull_timestamp)
 
-        print(legiscan_data)
         # Create 'text' and 'summary_text' values
         parsed_data = create_text_and_summary(legiscan_data)
 
