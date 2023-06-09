@@ -54,7 +54,7 @@ class DatabaseConnector:
         self.session.begin()
         try:
             for query in queries:
-                self.session.execute(query)
+                self.session.execute(text(query))
             self.session.commit()
         except Exception as e:
             self.session.rollback()
