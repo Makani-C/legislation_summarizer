@@ -1,4 +1,5 @@
 import logging
+import traceback
 
 from datetime import datetime
 from configparser import ConfigParser
@@ -65,7 +66,6 @@ def parse_data():
         query = f"SELECT MAX(updated_at) FROM {rds_table}"
         result = rds_db.execute_query(query)
         last_pull_timestamp = result[0][0] if result[0][0] is not None else datetime.min
-        print(last_pull_timestamp)
 
         # Read data from MariaDB that has been updated since the last pull
         maria_query = f"SELECT {', '.join(maria_columns)} FROM {maria_table} WHERE updated > %s LIMIT 10"
@@ -96,8 +96,12 @@ def parse_data():
             rds_db.execute_query(rds_query)
 
     except Exception as e:
-        # Handle errors appropriately
-        print(f"An error occurred: {str(e)}")
+        # Get the traceback information
+        tb_info = traceback.format_exc()
+        # Log the error along with traceback and line information
+        logger.error(f"An error occurred: {str(e)}\n{tb_info}")
+        # Raise the exception again to halt further execution if desired
+        raise
 
 
 if __name__ == "__main__":
