@@ -91,7 +91,7 @@ def parse_data():
 
             query = f"""
                 INSERT INTO {rds_table} ({', '.join(rds_columns)})
-                VALUES (%(bill_id)s, %(state)s, %(session_id)s, %(body_id)s, %(status_id)s, '%(pdf_link)s', %(text)s, %(summary_text)s, %(updated_at)s)
+                VALUES (%(bill_id)s, %(state)s, %(session_id)s, %(body_id)s, %(status_id)s, '%(pdf_link)s', '%(text)s', '%(summary_text)s', %(updated_at)s)
                 ON CONFLICT (bill_id) DO UPDATE
                 SET (state_abbr, session_id, body_id, status_id, state_url, updated_at) =
                     (EXCLUDED.state_abbr, EXCLUDED.session_id, EXCLUDED.body_id, EXCLUDED.status_id, EXCLUDED.state_url, NOW())
