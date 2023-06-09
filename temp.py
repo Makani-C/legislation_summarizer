@@ -5,7 +5,7 @@ from database_connection import RDS
 # RDS database connection details
 host = "legislation-db.cz3q8p7r1eqy.us-west-2.rds.amazonaws.com"
 port = 5432
-database = "legislation-database"
+database = "legislation"
 user = "postgres"
 password = "aaaaaaaa"
 
