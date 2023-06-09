@@ -80,18 +80,19 @@ def parse_data():
         query_template = text(f"""
             INSERT INTO {rds_table} ({', '.join(rds_columns)})
             VALUES (
-                :bill_id, :state_code, :session_id, :body_id, :status_id, :pdf_link, 
-                :text, :summary_text, :updated_at::TIMESTAMP
+                %(bill_id)s, %(state_code)s, %(session_id)s, %(body_id)s, %(status_id)s, %(pdf_link)s, 
+                %(text)s, %(summary_text)s, %(updated_at)s::TIMESTAMP
             )
             ON CONFLICT (bill_id) DO UPDATE
             SET (
                 state_abbr, session_id, body_id,
                 status_id, state_url, updated_at
             ) = (
-                :state_code, :session_id, :body_id,
-                :status_id, :pdf_link, NOW()
+                %(state_code)s, %(session_id)s, %(body_id)s,
+                %(status_id)s, %(pdf_link)s, NOW()
             )
         """)
+
         for row in maria_data:
             parsed_data = {
                 'bill_id': row["bill_id"],
@@ -104,17 +105,8 @@ def parse_data():
                 'summary_text': "",
                 'updated_at': datetime.now()
             }
-            query = query_template.bindparams(
-                bill_id=parsed_data['bill_id'],
-                state_code=parsed_data['state_code'],
-                session_id=parsed_data['session_id'],
-                body_id=parsed_data['body_id'],
-                status_id=parsed_data['status_id'],
-                pdf_link=parsed_data['pdf_link'],
-                text=parsed_data['text'],
-                summary_text=parsed_data['summary_text']
-            ).params(updated_at=parsed_data['updated_at'])
 
+            query = query_template % parsed_data
             queries.append(query)
 
         # Execute the transaction
