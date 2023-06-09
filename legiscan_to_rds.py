@@ -55,8 +55,8 @@ maria_columns = [
 
 rds_table = "bills"
 rds_columns = [
-    "bill_id", "state_abbr", "session_id", "body_id", "status_id",
-    "state_url", "text", "summary_text"
+    "bill_id", "state", "session_id", "body_id", "status_id",
+    "pdf_link", "text", "summary_text", "updated_at"
 ]
 
 
@@ -74,29 +74,32 @@ def parse_data():
         maria_data = maria_db.execute_query(maria_query)
 
         # Save data to Postgres RDS
-        for row in maria_data:
-            print(row)
-            # Perform data parsing based on mapping
-            parsed_data = [
-                row["bill_id"],
-                row["state_abbr"],
-                row["session_id"],
-                row["body_id"],
-                row["status_id"],
-                row["state_url"],
-                "",
-                ""
-            ]
+        queries = []
 
-            # Insert or update data into the bills table in Postgres RDS
-            rds_query = f"""
+        for row in maria_data:
+            parsed_data = {
+                'bill_id': row["bill_id"],
+                'state': row["state_abbr"],
+                'session_id': row["session_id"],
+                'body_id': row["body_id"],
+                'status_id': row["status_id"],
+                'pdf_link': row["state_url"],
+                'text': "",
+                'summary_text': "",
+                'updated_at': datetime.now()
+            }
+
+            query = f"""
                 INSERT INTO {rds_table} ({', '.join(rds_columns)})
-                VALUES {tuple(parsed_data)}
+                VALUES (%(bill_id)s, %(state)s, %(session_id)s, %(body_id)s, %(status_id)s, %(pdf_link)s, %(text)s, %(summary_text)s, %(updated_at)s)
                 ON CONFLICT (bill_id) DO UPDATE
                 SET (state_abbr, session_id, body_id, status_id, state_url, updated_at) =
                     (EXCLUDED.state_abbr, EXCLUDED.session_id, EXCLUDED.body_id, EXCLUDED.status_id, EXCLUDED.state_url, NOW())
             """
-            rds_db.execute_query(rds_query)
+            queries.append(query % parsed_data)
+
+        # Execute the transaction
+        rds_db.execute_transaction(queries)
 
     except Exception as e:
         # Get the traceback information

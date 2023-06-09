@@ -40,15 +40,7 @@ class DatabaseConnector:
                 self.close_connection()
         return wrapper
 
-
-class MariaDBLocal(DatabaseConnector):
-    def get_connection_string(self):
-        return f"mysql+pymysql://{self.user}:{self.password}@{self.host}/{self.database}"
-
-    def get_database_type(self):
-        return "local MariaDB"
-
-    @DatabaseConnector.connection_required
+    @connection_required
     def execute_query(self, query, params=None):
         result = self.session.execute(text(query), params)
 
@@ -56,6 +48,25 @@ class MariaDBLocal(DatabaseConnector):
         data = [dict(zip(column_names, row)) for row in result]
 
         return data
+
+    @connection_required
+    def execute_transaction(self, queries):
+        self.session.begin()
+        try:
+            for query in queries:
+                self.session.execute(query)
+            self.session.commit()
+        except Exception as e:
+            self.session.rollback()
+            raise e
+
+
+class MariaDBLocal(DatabaseConnector):
+    def get_connection_string(self):
+        return f"mysql+pymysql://{self.user}:{self.password}@{self.host}/{self.database}"
+
+    def get_database_type(self):
+        return "local MariaDB"
 
 
 class PostgresRDS(DatabaseConnector):
@@ -68,8 +79,3 @@ class PostgresRDS(DatabaseConnector):
 
     def get_database_type(self):
         return "Amazon RDS"
-
-    @DatabaseConnector.connection_required
-    def execute_query(self, query, params=None):
-        result = self.session.execute(text(query), params)
-        return result.fetchall()
