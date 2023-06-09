@@ -50,7 +50,7 @@ class MariaDBLocal(DatabaseConnector):
 
     @DatabaseConnector.connection_required
     def execute_query(self, query, params=None):
-        result = self.session.execute(text(query), params).fetchall()
+        result = self.session.execute(text(query), params)
 
         column_names = result.keys()
         data = [dict(zip(column_names, row)) for row in result]
