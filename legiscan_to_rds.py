@@ -173,12 +173,16 @@ def run_data_pipeline():
         last_pull_timestamp = get_last_pull_timestamp()
 
         # Get the updated data from MariaDB
+        logger.info(f"Pulling legiscan data since {last_pull_timestamp}")
         legiscan_data = get_updated_data(last_pull_timestamp)
+        logger.info(f"Got {len(legiscan_data)} records")
 
         # Create 'text' and 'summary_text' values
+        logger.info(f"Parsing PDF Data")
         parsed_data = create_text_and_summary(legiscan_data)
 
         # Save the data to Postgres RDS
+        logger.info(f"Saving Data to RDS")
         save_data_to_rds(parsed_data)
 
     except Exception as e:
