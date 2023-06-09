@@ -57,7 +57,7 @@ maria_columns = [
 
 rds_table = "bills"
 rds_columns = [
-    "bill_id", "state", "session_id", "body_id", "status_id",
+    "bill_id", "state_code", "session_id", "body_id", "status_id",
     "pdf_link", "text", "summary_text", "updated_at"
 ]
 
