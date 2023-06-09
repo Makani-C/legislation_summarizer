@@ -50,12 +50,12 @@ class DatabaseConnector:
         return data
 
     @connection_required
-    def execute_transaction(self, queries):
+    def execute_transaction(self, queries: list[tuple]):
         if self.session._transaction is None or not self.session._transaction.is_active:
             self.session.begin()
         try:
             for query in queries:
-                self.session.execute(text(query))
+                self.session.execute(text(query[0]), query[1])
             self.session.commit()
         except Exception as e:
             self.session.rollback()
