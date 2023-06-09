@@ -54,8 +54,8 @@ class DatabaseConnector:
         if self.session._transaction is None or not self.session._transaction.is_active:
             self.session.begin()
         try:
-            for query in queries:
-                self.session.execute(text(query[0]), query[1])
+            for query, params in queries:
+                self.session.execute(text(query).bindparams(params))
             self.session.commit()
         except Exception as e:
             self.session.rollback()
