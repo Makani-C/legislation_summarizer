@@ -2,7 +2,7 @@ import logging
 
 from datetime import datetime
 from configparser import ConfigParser
-from database_connection import LocalMariaDB, RDS
+from database_connection import MariaDBLocal, PostgresRDS
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -26,13 +26,13 @@ rds_password = config.get("rds", "rds_password")
 rds_database = config.get("rds", "rds_database")
 
 # Initialize MariaDB and RDS instances
-maria_db = LocalMariaDB(
+maria_db = MariaDBLocal(
     host=maria_host,
     user=maria_user,
     password=maria_password,
     database=maria_database
 )
-rds_db = RDS(
+rds_db = PostgresRDS(
     host=rds_host,
     port=rds_port,
     user=rds_user,

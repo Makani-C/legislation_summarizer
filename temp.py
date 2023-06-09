@@ -1,6 +1,6 @@
 import psycopg2
 
-from database_connection import RDS
+from database_connection import PostgresRDS
 
 # RDS database connection details
 host = "legislation-db.cz3q8p7r1eqy.us-west-2.rds.amazonaws.com"
@@ -25,7 +25,7 @@ create_table_query = """
 """
 
 try:
-    rds_db = RDS(
+    rds_db = PostgresRDS(
         host=host,
         port=port,
         user=user,

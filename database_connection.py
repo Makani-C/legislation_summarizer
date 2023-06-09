@@ -41,7 +41,7 @@ class DatabaseConnector:
         return wrapper
 
 
-class LocalMariaDB(DatabaseConnector):
+class MariaDBLocal(DatabaseConnector):
     def get_connection_string(self):
         return f"mysql+pymysql://{self.user}:{self.password}@{self.host}/{self.database}"
 
@@ -49,12 +49,12 @@ class LocalMariaDB(DatabaseConnector):
         return "local MariaDB"
 
     @DatabaseConnector.connection_required
-    def execute_query(self, query):
-        result = self.session.execute(query)
+    def execute_query(self, query, params=None):
+        result = self.session.execute(query, params)
         return result.fetchall()
 
 
-class RDS(DatabaseConnector):
+class PostgresRDS(DatabaseConnector):
     def __init__(self, host, port, user, password, database):
         super().__init__(host, user, password, database)
         self.port = port
@@ -66,6 +66,6 @@ class RDS(DatabaseConnector):
         return "Amazon RDS"
 
     @DatabaseConnector.connection_required
-    def execute_query(self, query):
+    def execute_query(self, query, params=None):
         result = self.session.execute(text(query))
         return result.fetchall()
