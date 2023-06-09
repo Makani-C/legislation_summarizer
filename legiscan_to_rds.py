@@ -117,10 +117,10 @@ def create_text_and_summary(data):
         text = ""
         for page in pdf_file.pages:
             text += page.extract_text()
-        print(text)
-        # Update the 'text' field in the dictionary
+
         row["text"] = text
         row["summary_text"] = ""  # Add your logic to create the 'summary_text' value
+
     return data
 
 
