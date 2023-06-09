@@ -3,11 +3,11 @@ import psycopg2
 from database_connection import RDS
 
 # RDS database connection details
-host = "legislation-database.cz3q8p7r1eqy.us-west-2.rds.amazonaws.com"
+host = "legislation-db.cz3q8p7r1eqy.us-west-2.rds.amazonaws.com"
 port = 5432
 database = "legislation-database"
 user = "postgres"
-password = "1VyeFXsR82sAPuj1"
+password = "aaaaaaaa"
 
 # SQL statement to create the bills table
 create_table_query = """
