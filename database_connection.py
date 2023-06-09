@@ -51,7 +51,8 @@ class DatabaseConnector:
 
     @connection_required
     def execute_transaction(self, queries):
-        self.session.begin()
+        if self.session.transaction is None:
+            self.session.begin()
         try:
             for query in queries:
                 self.session.execute(text(query))
