@@ -75,6 +75,7 @@ def parse_data():
 
         # Save data to Postgres RDS
         for row in maria_data:
+            print(row)
             # Perform data parsing based on mapping
             parsed_data = [
                 row["bill_id"],
