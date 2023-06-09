@@ -79,3 +79,6 @@ class PostgresRDS(DatabaseConnector):
 
     def get_database_type(self):
         return "Amazon RDS"
+
+    def escape_string(self, value):
+        return self.session.query(text("(:value)::text").params(value=value)).scalar()
