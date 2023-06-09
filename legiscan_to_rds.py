@@ -65,7 +65,7 @@ def parse_data():
         # Read the timestamp of the last pull
         query = f"SELECT MAX(updated_at) FROM {rds_table}"
         result = rds_db.execute_query(query)
-        last_pull_timestamp = result[0][0] if result[0][0] is not None else datetime.min
+        last_pull_timestamp = result[0][0] or datetime.datetime.min
 
         # Read data from MariaDB that has been updated since the last pull
         maria_query = f"""
