@@ -55,6 +55,8 @@ class DatabaseConnector:
             self.session.begin()
         try:
             for query, params in queries:
+                print(query)
+                print(params)
                 self.session.execute(text(query).bindparams(params))
             self.session.commit()
         except Exception as e:
