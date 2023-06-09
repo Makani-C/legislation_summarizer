@@ -3,6 +3,7 @@ from sqlalchemy.orm import sessionmaker
 
 
 class DatabaseConnector:
+    """Base class for connecting to a database."""
     def __init__(self, host, user, password, database):
         self.host = host
         self.user = user
@@ -31,6 +32,7 @@ class DatabaseConnector:
 
     @staticmethod
     def connection_required(func):
+        """Decorator that ensures a database connection is established before executing a method."""
         def wrapper(self, *args, **kwargs):
             if self.session is None or not self.session.is_active:
                 self.connect()
@@ -41,7 +43,16 @@ class DatabaseConnector:
         return wrapper
 
     @connection_required
-    def execute_query(self, query, params=None):
+    def execute_query(self, query: str, params=None):
+        """ Execute a query and return the result as a list of dictionaries.
+
+        Args:
+            query (str): The SQL query to execute.
+            params (dict): Optional parameters to be passed to the query.
+
+        Returns:
+            list: A list of dictionaries representing the query result.
+        """
         result = self.session.execute(text(query), params)
 
         column_names = result.keys()
@@ -71,6 +82,14 @@ class PostgresRDS(DatabaseConnector):
 
     @DatabaseConnector.connection_required
     def execute_transaction(self, queries: list[tuple]):
+        """ Execute a transaction with a list of queries.
+
+        Args:
+            queries (list): A list of tuples containing (query, params) pairs.
+
+        Raises:
+            Exception: If an error occurs during the transaction.
+        """
         if self.session._transaction is None or not self.session._transaction.is_active:
             self.session.begin()
         try:
