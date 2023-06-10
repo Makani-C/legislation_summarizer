@@ -90,7 +90,7 @@ def get_updated_data(last_pull_timestamp):
     """
     query = f"""
         SELECT {', '.join(maria_columns)}  FROM {maria_table}
-        WHERE updated > '{last_pull_timestamp.strftime('%Y-%m-%d %H:%M:%S')}' LIMIT 20"""
+        WHERE updated > '{last_pull_timestamp.strftime('%Y-%m-%d %H:%M:%S')}'"""
     data = maria_db.execute_query(query)
 
     return data
@@ -106,7 +106,8 @@ def create_text_and_summary(data):
     Returns:
         list: A list of dictionaries with 'text' and 'summary_text' values added.
     """
-    for row in data:
+    number_of_rows = len(data)
+    for index, row in enumerate(data):
         # Extract text from the PDF file using the provided URL
         url = row["state_url"]
         response = requests.get(url)
@@ -121,6 +122,8 @@ def create_text_and_summary(data):
         row["text"] = text
         row["summary_text"] = ""  # Add your logic to create the 'summary_text' value
 
+        if (index + 1) % 10 == 0:
+            logger.info(f"Completed text extraction for {index + 1} of {number_of_rows}")
     return data
 
 
