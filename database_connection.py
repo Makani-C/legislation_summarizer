@@ -54,6 +54,8 @@ class DatabaseConnector:
             list: A list of dictionaries representing the query result.
         """
         result = self.session.execute(text(query), params)
+        print(result)
+        print(result.keys())
 
         column_names = result.keys()
         data = [dict(zip(column_names, row)) for row in result]
