@@ -90,7 +90,9 @@ def get_updated_data(last_pull_timestamp):
     """
     query = f"""
         SELECT {', '.join(maria_columns)}  FROM {maria_table}
-        WHERE updated > '{last_pull_timestamp.strftime('%Y-%m-%d %H:%M:%S')}'"""
+        WHERE updated > '{last_pull_timestamp.strftime('%Y-%m-%d %H:%M:%S')}' 
+        LIMIT 5
+        """
     data = maria_db.execute_query(query)
 
     return data
