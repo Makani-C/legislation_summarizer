@@ -2,6 +2,18 @@ from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 
 
+def connection_required(func):
+    """Decorator that ensures a database connection is established before executing a method."""
+    def wrapper(self, *args, **kwargs):
+        if self.session is None or not self.session.is_active:
+            self.connect()
+        try:
+            return func(self, *args, **kwargs)
+        finally:
+            self.close_connection()
+    return wrapper
+
+
 class DatabaseConnector:
     """Base class for connecting to a database."""
     def __init__(self, host, user, password, database):
@@ -29,17 +41,6 @@ class DatabaseConnector:
 
     def get_database_type(self):
         raise NotImplementedError("Subclasses must implement get_database_type()")
-
-    def connection_required(self, func):
-        """Decorator that ensures a database connection is established before executing a method."""
-        def wrapper(*args, **kwargs):
-            if self.session is None or not self.session.is_active:
-                self.connect()
-            try:
-                return func(self, *args, **kwargs)
-            finally:
-                self.close_connection()
-        return wrapper
 
     @connection_required
     def execute_query(self, query: str, params=None):
@@ -79,7 +80,7 @@ class PostgresRDS(DatabaseConnector):
     def get_database_type(self):
         return "Amazon RDS"
 
-    @DatabaseConnector.connection_required
+    @connection_required
     def execute_transaction(self, queries: list[tuple]):
         """ Execute a transaction with a list of queries.
 
