@@ -30,9 +30,10 @@ class DatabaseConnector:
     def get_database_type(self):
         raise NotImplementedError("Subclasses must implement get_database_type()")
 
-    def connection_required(self, func):
+    @classmethod
+    def connection_required(cls, func):
         """Decorator that ensures a database connection is established before executing a method."""
-        def wrapper(*args, **kwargs):
+        def wrapper(self, *args, **kwargs):
             if self.session is None or not self.session.is_active:
                 self.connect()
             try:
