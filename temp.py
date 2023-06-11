@@ -13,7 +13,7 @@ password = "fdoI8Ve6A5TtHxvj"
 create_table_query = """
     CREATE TABLE IF NOT EXISTS bills (
         bill_id INT PRIMARY KEY,
-        state VARCHAR(50),
+        state_code VARCHAR(50),
         session_id INT,
         body_id INT,
         status_id INT,
