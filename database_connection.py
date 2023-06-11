@@ -81,7 +81,7 @@ class PostgresRDS(DatabaseConnector):
         return "Amazon RDS"
 
     @connection_required
-    def execute_transaction(self, queries: list[tuple]):
+    def execute_transaction(self, queries: list):
         """ Execute a transaction with a list of queries.
 
         Args:
