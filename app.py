@@ -39,7 +39,7 @@ db_connector = PostgresRDS(
 @app.get("/bills")
 @connection_required
 def get_bills():
-    query = "SELECT * FROM bills"
+    query = "SELECT * FROM bills LIMIT 2;"
     rows = db_connector.execute_query(query)
     bills = [Bill(**row) for row in rows]
     return bills
