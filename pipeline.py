@@ -19,10 +19,10 @@ config = ConfigParser()
 config.read("config.ini")
 
 # Read database credentials
-maria_host = config.get("database", "maria_host")
-maria_user = config.get("database", "maria_user")
-maria_password = config.get("database", "maria_password")
-maria_database = config.get("database", "maria_database")
+maria_host = config.get("maria_db", "maria_host")
+maria_user = config.get("maria_db", "maria_user")
+maria_password = config.get("maria_db", "maria_password")
+maria_database = config.get("maria_db", "maria_database")
 
 # Read RDS credentials
 rds_host = config.get("rds", "rds_host")

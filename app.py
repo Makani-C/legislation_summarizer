@@ -10,7 +10,6 @@ app = FastAPI()
 # Read the database credentials from config.ini
 config = ConfigParser()
 config.read("config.ini")
-db_config = config["database"]
 
 
 # Pydantic model for the Bill object
@@ -28,11 +27,11 @@ class Bill(BaseModel):
 
 # Initialize the database connector
 db_connector = PostgresRDS(
-    host=db_config["host"],
-    port=db_config["port"],
-    user=db_config["user"],
-    password=db_config["password"],
-    database=db_config["name"]
+    host=config.get("rds", "rds_host"),
+    port=config.get("rds", "rds_port"),
+    user=config.get("rds", "rds_user"),
+    password=config.get("rds", "rds_password"),
+    database=config.get("rds", "rds_database")
 )
 
 
