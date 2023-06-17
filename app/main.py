@@ -7,7 +7,6 @@ from database_connection import PostgresRDS, connection_required
 
 # Create a FastAPI app
 app = FastAPI()
-handler = Mangum(app)
 
 # Read the database credentials from config.ini
 config = ConfigParser()
@@ -47,7 +46,4 @@ def get_bills():
     return bills
 
 
-# Run the app with uvicorn server
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="localhost", port=8000)
+handler = Mangum(app)
