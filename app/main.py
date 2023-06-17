@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from datetime import datetime
 from configparser import ConfigParser
 from pydantic import BaseModel
 
@@ -22,7 +23,7 @@ class Bill(BaseModel):
     pdf_link: str
     text: str
     summary_text: str
-    updated_at: str
+    updated_at: datetime
 
 
 # Initialize the database connector
@@ -40,5 +41,6 @@ db_connector = PostgresRDS(
 def get_bills():
     query = "SELECT * FROM bills LIMIT 2;"
     rows = db_connector.execute_query(query)
+    print(rows)
     bills = [Bill(**row) for row in rows]
     return bills
