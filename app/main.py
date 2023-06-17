@@ -4,8 +4,8 @@ from typing import Optional
 from configparser import ConfigParser
 from pydantic import BaseModel
 
-from sqlalchemy import Column, Integer, String, DateTime
-from sqlalchemy.orm import declarative_base, selectinload
+from sqlalchemy import Column, Integer, String, DateTime, select
+from sqlalchemy.orm import declarative_base
 
 from database_connection import PostgresRDS
 
@@ -50,7 +50,6 @@ class Bill(BaseModel):
     body_id: int
     status_id: int
     pdf_link: str
-    text: Optional[str]
     summary_text: str
     updated_at: datetime
 
@@ -62,8 +61,7 @@ class Bill(BaseModel):
 @app.get("/bills", response_model=list[Bill])
 def get_bills(
         bill_id: Optional[int] = None,
-        limit: int = 10,
-        include_full_text: bool = False
+        limit: int = 10
 ):
     db_connector.connect()
 
@@ -74,9 +72,17 @@ def get_bills(
     if limit:
         query = query.limit(limit)
 
-    # if not include_full_text:
-        # query = query.options(selectinload(BillsORM.text).defer(BillsORM.text))
-
     results = db_connector.execute_orm_query(query)
 
     return results
+
+
+@app.get("/full_bill_text")
+def get_full_bill_text(
+        bill_id: int
+) -> str:
+    query = select(BillsORM.text).where(BillsORM.bill_id == bill_id)
+
+    result = db_connector.execute_orm_query(query)
+
+    return result
