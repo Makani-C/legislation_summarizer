@@ -1,11 +1,13 @@
 from fastapi import FastAPI
 from configparser import ConfigParser
 from pydantic import BaseModel
+from mangum import Mangum
 
 from database_connection import PostgresRDS, connection_required
 
 # Create a FastAPI app
 app = FastAPI()
+handler = Mangum(app)
 
 # Read the database credentials from config.ini
 config = ConfigParser()
