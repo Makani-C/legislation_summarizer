@@ -42,10 +42,10 @@ db_connector = PostgresRDS(
 def get_bills(limit: int = 10, include_full_text: bool = False):
     columns = [
         "bill_id", "state_code", "session_id", "body_id", "status_id",
-        "pdf_link", "text", "updated_at"
+        "pdf_link", "summary_text", "updated_at"
     ]
     if include_full_text:
-        columns.append("summary_text")
+        columns.append("text")
     query = f"SELECT {', '.join(columns)} FROM bills LIMIT {limit};"
     rows = db_connector.execute_query(query)
     bills = [Bill(**row) for row in rows]
