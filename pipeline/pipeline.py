@@ -1,4 +1,6 @@
 import io
+import sys
+import os
 import logging
 import requests
 import traceback
@@ -8,7 +10,9 @@ from configparser import ConfigParser
 from PyPDF2 import PdfReader
 from sqlalchemy import text
 
-from database_connection import MariaDBLocal, PostgresRDS
+sys.path.append(os.path.dirname(os.getcwd()))
+
+from utils.database_connection import MariaDBLocal, PostgresRDS
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")

@@ -1,3 +1,6 @@
+import os
+import sys
+
 from fastapi import FastAPI
 from datetime import datetime
 from typing import Optional
@@ -7,7 +10,10 @@ from pydantic import BaseModel
 from sqlalchemy import Column, Integer, String, DateTime, select
 from sqlalchemy.orm import declarative_base
 
-from database_connection import PostgresRDS
+sys.path.append(os.path.dirname(os.getcwd()))
+
+from utils.database_connection import PostgresRDS
+
 
 # Create a FastAPI app
 app = FastAPI()

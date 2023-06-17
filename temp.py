@@ -1,6 +1,6 @@
 import psycopg2
 
-from app.database_connection import PostgresRDS
+from utils.database_connection import PostgresRDS
 
 # RDS database connection details
 host = "database-1.cz3q8p7r1eqy.us-west-2.rds.amazonaws.com"
