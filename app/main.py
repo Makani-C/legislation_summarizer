@@ -1,7 +1,6 @@
 from fastapi import FastAPI
 from configparser import ConfigParser
 from pydantic import BaseModel
-from mangum import Mangum
 
 from database_connection import PostgresRDS, connection_required
 
@@ -38,12 +37,8 @@ db_connector = PostgresRDS(
 
 # Define a route to get all bills
 @app.get("/bills")
-@connection_required
 def get_bills():
     query = "SELECT * FROM bills LIMIT 2;"
     rows = db_connector.execute_query(query)
     bills = [Bill(**row) for row in rows]
     return bills
-
-
-handler = Mangum(app)
