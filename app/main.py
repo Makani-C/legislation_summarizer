@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from datetime import datetime
 from configparser import ConfigParser
 from pydantic import BaseModel
+from typing import Optional
 
 from database_connection import PostgresRDS, connection_required
 
@@ -21,7 +22,7 @@ class Bill(BaseModel):
     body_id: int
     status_id: int
     pdf_link: str
-    text: str
+    text: Optional[str]
     summary_text: str
     updated_at: datetime
 
@@ -38,9 +39,15 @@ db_connector = PostgresRDS(
 
 # Define a route to get all bills
 @app.get("/bills")
-def get_bills():
-    query = "SELECT * FROM bills LIMIT 2;"
+def get_bills(limit: int = 10, include_full_text: bool = False):
+    columns = [
+        "bill_id", "state_code", "session_id", "body_id", "status_id",
+        "pdf_link", "text", "updated_at"
+    ]
+    if include_full_text:
+        columns.append("summary_text")
+    query = f"SELECT {', '.join(columns)} FROM bills LIMIT {limit};"
     rows = db_connector.execute_query(query)
-    print(rows)
     bills = [Bill(**row) for row in rows]
+
     return bills
