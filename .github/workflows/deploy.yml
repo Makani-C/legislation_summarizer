@@ -3,7 +3,7 @@
 name: Deploy
 on: workflow_dispatch
 env:
-  deploy_image: ${{ secrets.DOCKERHUB_USERNAME }}/legislation_summarizer
+  deploy_image: ${{ secrets.DOCKERHUB_USERNAME }}/legislation_summarizer:0.0
   container_name: legislation_summarizer
 
 
