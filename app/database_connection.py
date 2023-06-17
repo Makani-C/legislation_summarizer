@@ -60,6 +60,18 @@ class DatabaseConnector:
 
         return data
 
+    @connection_required
+    def execute_orm_query(self, query):
+        """ Execute an ORM query and return the result.
+
+        Args:
+            query: The SQLAlchemy query to execute.
+
+        Returns:
+            list: A list of ORM query results.
+        """
+        return self.session.execute(query).scalars().all()
+
 
 class MariaDBLocal(DatabaseConnector):
     def get_connection_string(self):

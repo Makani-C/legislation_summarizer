@@ -1,8 +1,12 @@
 from fastapi import FastAPI
 from datetime import datetime
+from typing import Optional
 from configparser import ConfigParser
 from pydantic import BaseModel
-from typing import Optional
+
+from sqlalchemy import Column, Integer, String, DateTime
+from sqlalchemy.orm import declarative_base, selectinload
+
 from database_connection import PostgresRDS
 
 # Create a FastAPI app
@@ -21,6 +25,22 @@ db_connector = PostgresRDS(
     database=config.get("rds", "rds_database")
 )
 
+Base = declarative_base()
+
+
+class BillsORM(Base):
+    __tablename__ = "bills"
+
+    bill_id = Column(Integer, primary_key=True)
+    state_code = Column(String)
+    session_id = Column(Integer)
+    body_id = Column(Integer)
+    status_id = Column(Integer)
+    pdf_link = Column(String)
+    text = Column(String, nullable=True)
+    summary_text = Column(String)
+    updated_at = Column(DateTime)
+
 
 # Pydantic model for the Bill object
 class Bill(BaseModel):
@@ -34,26 +54,29 @@ class Bill(BaseModel):
     summary_text: str
     updated_at: datetime
 
+    class Config:
+        orm_mode = True
+
 
 # Define a route to get all bills
-@app.get("/bills")
-def get_bills(bill_id: Optional[int] = None, limit: int = 10, include_full_text: bool = False):
-    columns = [
-        "bill_id", "state_code", "session_id", "body_id", "status_id",
-        "pdf_link", "summary_text", "updated_at"
-    ]
-    if include_full_text:
-        columns.append("text")
+@app.get("/bills", response_model=list[Bill])
+def get_bills(
+        bill_id: Optional[int] = None,
+        limit: int = 10,
+        include_full_text: bool = False
+):
+    db_connector.connect()
 
-    select_clause = f"SELECT {', '.join(columns)} FROM bills"
-    filter_clause = f"WHERE bill_id = :bill_id" if bill_id else ""
-    limit_clause = f"LIMIT :limit" if limit else ""
+    query = db_connector.session.query(BillsORM)
 
-    query = f"{select_clause} {filter_clause} {limit_clause}"
+    if bill_id is not None:
+        query = query.filter(BillsORM.bill_id == bill_id)
+    if limit:
+        query = query.limit(limit)
 
-    params = {"bill_id": bill_id, "limit": limit}
+    # if not include_full_text:
+        # query = query.options(selectinload(BillsORM.text).defer(BillsORM.text))
 
-    rows = db_connector.execute_query(query, params)
-    bills = [Bill(**row) for row in rows]
+    results = db_connector.execute_orm_query(query)
 
-    return bills
+    return results
