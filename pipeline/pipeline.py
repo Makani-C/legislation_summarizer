@@ -14,7 +14,7 @@ filepath = os.path.realpath(__file__)
 root_dir = os.path.dirname(os.path.dirname(filepath))
 sys.path.append(root_dir)
 
-from utils.database_connection import MariaDBLocal, PostgresRDS
+from database.connection import MariaDB, PostgresDB
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -38,13 +38,13 @@ rds_password = config.get("rds", "rds_password")
 rds_database = config.get("rds", "rds_database")
 
 # Initialize MariaDB and RDS instances
-maria_db = MariaDBLocal(
+maria_db = MariaDB(
     host=maria_host,
     user=maria_user,
     password=maria_password,
     database=maria_database
 )
-rds_db = PostgresRDS(
+rds_db = PostgresDB(
     host=rds_host,
     port=rds_port,
     user=rds_user,

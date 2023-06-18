@@ -7,14 +7,13 @@ from typing import Optional
 from configparser import ConfigParser
 from pydantic import BaseModel
 
-from sqlalchemy import Column, Integer, String, DateTime, select
-from sqlalchemy.orm import declarative_base
+from sqlalchemy import select
 
 filepath = os.path.realpath(__file__)
 root_dir = os.path.dirname(os.path.dirname(filepath))
 sys.path.append(root_dir)
 
-from utils.database_connection import PostgresRDS
+from database import connection, orm
 
 
 # Create a FastAPI app
@@ -25,29 +24,13 @@ config = ConfigParser()
 config.read(f"{root_dir}/config.ini")
 
 # Initialize the database connector
-db_connector = PostgresRDS(
+db_connector = connection.PostgresDB(
     host=config.get("rds", "rds_host"),
     port=config.getint("rds", "rds_port"),
     user=config.get("rds", "rds_user"),
     password=config.get("rds", "rds_password"),
     database=config.get("rds", "rds_database")
 )
-
-Base = declarative_base()
-
-
-class BillsORM(Base):
-    __tablename__ = "bills"
-
-    bill_id = Column(Integer, primary_key=True)
-    state_code = Column(String)
-    session_id = Column(Integer)
-    body_id = Column(Integer)
-    status_id = Column(Integer)
-    pdf_link = Column(String)
-    text = Column(String, nullable=True)
-    summary_text = Column(String)
-    updated_at = Column(DateTime)
 
 
 # Pydantic model for the Bill object
@@ -73,10 +56,10 @@ def get_bills(
 ):
     db_connector.connect()
 
-    query = db_connector.session.query(BillsORM)
+    query = db_connector.session.query(orm.Bills)
 
     if bill_id is not None:
-        query = query.filter(BillsORM.bill_id == bill_id)
+        query = query.filter(orm.Bills.bill_id == bill_id)
     if limit:
         query = query.limit(limit)
 
@@ -89,7 +72,7 @@ def get_bills(
 def get_full_bill_text(
         bill_id: int
 ) -> str:
-    query = select(BillsORM.text).where(BillsORM.bill_id == bill_id)
+    query = select(orm.Bills.text).where(orm.Bills.bill_id == bill_id)
 
     result = db_connector.execute_orm_query(query)
 

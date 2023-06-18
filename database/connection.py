@@ -29,18 +29,15 @@ class DatabaseConnector:
         self.engine = create_engine(connection_string)
         session = sessionmaker(bind=self.engine)
         self.session = session()
-        print(f"Connected to {self.get_database_type()} database.")
+        print(f"Connected to {self}")
 
     def close_connection(self):
         self.session.close()
         self.engine.dispose()
-        print(f"Connection to {self.get_database_type()} database closed.")
+        print(f"Closed connection to {self}")
 
     def get_connection_string(self):
         raise NotImplementedError("Subclasses must implement get_connection_string()")
-
-    def get_database_type(self):
-        raise NotImplementedError("Subclasses must implement get_database_type()")
 
     @connection_required
     def execute_query(self, query: str, params=None):
@@ -73,24 +70,25 @@ class DatabaseConnector:
         return self.session.execute(query).scalars().all()
 
 
-class MariaDBLocal(DatabaseConnector):
+class MariaDB(DatabaseConnector):
+
+    def __repr__(self):
+        return f"MariaDB at {self.host}/{self.database}"
+
     def get_connection_string(self):
         return f"mysql+pymysql://{self.user}:{self.password}@{self.host}/{self.database}"
 
-    def get_database_type(self):
-        return "local MariaDB"
 
-
-class PostgresRDS(DatabaseConnector):
+class PostgresDB(DatabaseConnector):
     def __init__(self, host, port, user, password, database):
         super().__init__(host, user, password, database)
         self.port = port
 
+    def __repr__(self):
+        return f"RDS PostgresDB at {self.host}/{self.database}"
+
     def get_connection_string(self):
         return f"postgresql://{self.user}:{self.password}@{self.host}:{self.port}/{self.database}"
-
-    def get_database_type(self):
-        return "Amazon RDS"
 
     @connection_required
     def execute_transaction(self, queries: list):
