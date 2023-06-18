@@ -10,7 +10,8 @@ from configparser import ConfigParser
 from PyPDF2 import PdfReader
 from sqlalchemy import text
 
-sys.path.append(os.path.dirname(os.getcwd()))
+filepath = os.path.realpath(__file__)
+sys.path.append(os.path.dirname(os.path.dirname(filepath)))
 
 from utils.database_connection import MariaDBLocal, PostgresRDS
 
