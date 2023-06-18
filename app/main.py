@@ -11,7 +11,8 @@ from sqlalchemy import Column, Integer, String, DateTime, select
 from sqlalchemy.orm import declarative_base
 
 filepath = os.path.realpath(__file__)
-sys.path.append(os.path.dirname(os.path.dirname(filepath)))
+root_dir = os.path.dirname(os.path.dirname(filepath))
+sys.path.append(root_dir)
 
 from utils.database_connection import PostgresRDS
 
@@ -21,7 +22,7 @@ app = FastAPI()
 
 # Read the database credentials from config.ini
 config = ConfigParser()
-config.read("config.ini")
+config.read(f"{root_dir}/config.ini")
 
 # Initialize the database connector
 db_connector = PostgresRDS(

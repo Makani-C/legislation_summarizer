@@ -11,7 +11,8 @@ from PyPDF2 import PdfReader
 from sqlalchemy import text
 
 filepath = os.path.realpath(__file__)
-sys.path.append(os.path.dirname(os.path.dirname(filepath)))
+root_dir = os.path.dirname(os.path.dirname(filepath))
+sys.path.append(root_dir)
 
 from utils.database_connection import MariaDBLocal, PostgresRDS
 
@@ -21,7 +22,7 @@ logger = logging.getLogger(__name__)
 
 # Read configuration file
 config = ConfigParser()
-config.read("config.ini")
+config.read(f"{root_dir}/config.ini")
 
 # Read database credentials
 maria_host = config.get("maria_db", "maria_host")
