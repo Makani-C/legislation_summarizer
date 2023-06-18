@@ -1,14 +1,18 @@
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.exc import IntegrityError
 
 
-def connection_required(func):
+def in_session(func):
     """Decorator that ensures a database connection is established before executing a method."""
     def wrapper(self, *args, **kwargs):
         if self.session is None or not self.session.is_active:
             self.connect()
         try:
             return func(self, *args, **kwargs)
+        except IntegrityError as e:
+            self.session.rollback()
+            raise e
         finally:
             self.close_connection()
     return wrapper
@@ -39,7 +43,7 @@ class DatabaseConnector:
     def get_connection_string(self):
         raise NotImplementedError("Subclasses must implement get_connection_string()")
 
-    @connection_required
+    @in_session
     def execute_query(self, query: str, params=None):
         """ Execute a query and return the result as a list of dictionaries.
 
@@ -57,7 +61,7 @@ class DatabaseConnector:
 
         return data
 
-    @connection_required
+    @in_session
     def execute_orm_query(self, query):
         """ Execute an ORM query and return the result.
 
@@ -90,7 +94,7 @@ class PostgresDB(DatabaseConnector):
     def get_connection_string(self):
         return f"postgresql://{self.user}:{self.password}@{self.host}:{self.port}/{self.database}"
 
-    @connection_required
+    @in_session
     def execute_transaction(self, queries: list):
         """ Execute a transaction with a list of queries.
 

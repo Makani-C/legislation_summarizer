@@ -8,13 +8,13 @@ import traceback
 from datetime import datetime
 from configparser import ConfigParser
 from PyPDF2 import PdfReader
-from sqlalchemy import text
+from sqlalchemy.exc import IntegrityError
 
 filepath = os.path.realpath(__file__)
 root_dir = os.path.dirname(os.path.dirname(filepath))
 sys.path.append(root_dir)
 
-from database.connection import MariaDB, PostgresDB
+from database import connection, orm
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -38,13 +38,13 @@ rds_password = config.get("rds", "rds_password")
 rds_database = config.get("rds", "rds_database")
 
 # Initialize MariaDB and RDS instances
-maria_db = MariaDB(
+maria_db = connection.MariaDB(
     host=maria_host,
     user=maria_user,
     password=maria_password,
     database=maria_database
 )
-rds_db = PostgresDB(
+rds_db = connection.PostgresDB(
     host=rds_host,
     port=rds_port,
     user=rds_user,
@@ -141,40 +141,29 @@ def save_data_to_rds(data):
     Args:
         data (list): A list of dictionaries containing the data to be saved.
     """
-    queries = []
-    query_template = text(f"""
-        INSERT INTO {rds_table} ({', '.join(rds_columns)})
-        VALUES (
-            :bill_id, :state_code, :session_id, :body_id, :status_id, 
-            :pdf_link, :text, :summary_text, :updated_at
-        )
-        ON CONFLICT (bill_id) DO UPDATE
-        SET (
-            state_code, session_id, body_id, status_id, 
-            pdf_link, text, summary_text, updated_at
-        ) = (
-            :state_code, :session_id, :body_id, :status_id,
-            :pdf_link, :text, :summary_text, :updated_at
-        )
-    """)
+    rds_db.connect()
 
-    for row in data:
-        parsed_data = {
-            "bill_id": row["bill_id"],
-            "state_code": row["state_abbr"],
-            "session_id": row["session_id"],
-            "body_id": row["body_id"],
-            "status_id": row["status_id"],
-            "pdf_link": row["state_url"],
-            "text": row["text"],
-            "summary_text": row["summary_text"],
-            "updated_at": datetime.now()
-        }
+    try:
+        for row in data:
+            bill = orm.Bills(
+                bill_id=row["bill_id"],
+                state_code=row["state_abbr"],
+                session_id=row["session_id"],
+                body_id=row["body_id"],
+                status_id=row["status_id"],
+                pdf_link=row["state_url"],
+                text=row["text"],
+                summary_text=row["summary_text"],
+                updated_at=datetime.now()
+            )
 
-        queries.append((query_template, parsed_data))
+            rds_db.session.add(bill)
 
-    # Execute the transaction
-    rds_db.execute_transaction(queries)
+    except IntegrityError as e:
+        rds_db.session.rollback()
+        raise e
+    finally:
+        rds_db.close_connection()
 
 
 def run_data_pipeline():
