@@ -8,6 +8,7 @@ import traceback
 from datetime import datetime
 from configparser import ConfigParser
 from PyPDF2 import PdfReader
+from sqlalchemy import func, inspect
 from sqlalchemy.exc import IntegrityError
 
 filepath = os.path.realpath(__file__)
@@ -71,31 +72,37 @@ rds_columns = [
 ]
 
 
-def get_last_pull_timestamp():
+def get_last_pull_timestamp(model: orm.Base):
     """ Get the timestamp of the last pull from the RDS table.
+
+    Args:
+        model (orm.Base): RDS table to get timestamp for
 
     Returns:
         datetime.datetime: The last pull timestamp.
     """
-    query = f"SELECT MAX(updated_at) FROM {rds_table}"
-    result = rds_db.execute_query(query)
-    last_pull_timestamp = result[0]["max"] or datetime.min
+    rds_db.connect()
+    try:
+        latest_updated_date = rds_db.session.query(func.max(model.updated_at)).scalar()
+    finally:
+        rds_db.close_connection()
 
-    return last_pull_timestamp
+    return latest_updated_date or datetime.min
 
 
-def get_updated_data(last_pull_timestamp):
+def get_updated_data(last_pull_timestamp, table):
     """
     Get the updated data from the MariaDB table.
 
     Args:
         last_pull_timestamp (datetime.datetime): The timestamp of the last pull.
+        table (str): MariaDB table to pull from
 
     Returns:
         list: A list of dictionaries containing the updated data.
     """
     query = f"""
-        SELECT {', '.join(maria_columns)}  FROM {maria_table}
+        SELECT *  FROM {table}
         WHERE updated > '{last_pull_timestamp.strftime('%Y-%m-%d %H:%M:%S')}' 
         """
     data = maria_db.execute_query(query)
@@ -134,55 +141,64 @@ def create_text_and_summary(data):
     return data
 
 
-def save_data_to_rds(data):
+def save_data_to_rds(model: orm.Base, data: list[dict]):
     """
     Save the data to the RDS table.
 
     Args:
+        model (orm.Base): ORM to describe table to save to
         data (list): A list of dictionaries containing the data to be saved.
     """
-    rds_db.connect()
+    if data:
+        rds_db.connect()
 
-    try:
-        for row in data:
-            bill = orm.Bills(
-                bill_id=row["bill_id"],
-                state_code=row["state_abbr"],
-                session_id=row["session_id"],
-                body_id=row["body_id"],
-                status_id=row["status_id"],
-                pdf_link=row["state_url"],
-                text=row["text"],
-                summary_text=row["summary_text"],
-                updated_at=datetime.now()
-            )
+        try:
+            orm_keys = set(inspect(model).columns.keys()) - {"updated_at"}
+            for input_row in data:
+                rds_row = model(
+                    **input_row[orm_keys],
+                    updated_at=datetime.now()
+                )
+                rds_db.session.add(rds_row)
 
-            rds_db.session.add(bill)
-
-    except IntegrityError as e:
-        rds_db.session.rollback()
-        raise e
-    finally:
-        rds_db.close_connection()
+        except IntegrityError as e:
+            rds_db.session.rollback()
+            raise e
+        finally:
+            rds_db.close_connection()
 
 
 def run_data_pipeline():
+    table_mappings = [
+        {
+            "mariadb_table": "lsv_bills_text",
+            "rds_orm": orm.Bills
+        }
+    ]
     try:
-        # Get the timestamp of the last pull
-        last_pull_timestamp = get_last_pull_timestamp()
+        for mapping in table_mappings:
+            # Get the timestamp of the last pull
+            last_pull_timestamp = get_last_pull_timestamp(mapping["rds_orm"])
 
-        # Get the updated data from MariaDB
-        logger.info(f"Pulling legiscan data since {last_pull_timestamp}")
-        legiscan_data = get_updated_data(last_pull_timestamp)
-        logger.info(f"Got {len(legiscan_data)} records")
+            # Get the updated data from MariaDB
+            logger.info(f"Pulling legiscan data since {last_pull_timestamp}")
+            legiscan_data = get_updated_data(
+                last_pull_timestamp=last_pull_timestamp,
+                table=mapping["mariadb_table"]
+            )
+            logger.info(f"Got {len(legiscan_data)} records")
 
-        # Create 'text' and 'summary_text' values
-        logger.info(f"Parsing PDF Data")
-        parsed_data = create_text_and_summary(legiscan_data)
+            if mapping["rds_model"] == orm.Bills:
+                # Create 'text' and 'summary_text' values
+                logger.info(f"Parsing PDF Data")
+                legiscan_data = create_text_and_summary(legiscan_data)
 
-        # Save the data to Postgres RDS
-        logger.info(f"Saving Data to RDS")
-        save_data_to_rds(parsed_data)
+            # Save the data to Postgres RDS
+            logger.info(f"Saving Data to RDS")
+            save_data_to_rds(
+                model=mapping["rds_model"],
+                data=legiscan_data
+            )
 
     except Exception as e:
         # Get the traceback information

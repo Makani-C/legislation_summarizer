@@ -5,7 +5,13 @@ from sqlalchemy.orm import declarative_base
 Base = declarative_base()
 
 
-class Bills(Base):
+class BaseORM(Base):
+    __tablename__ = None
+
+    updated_at = Column(DateTime)
+
+
+class Bills(BaseORM):
     __tablename__ = "bills"
 
     bill_id = Column(Integer, primary_key=True)
@@ -16,4 +22,3 @@ class Bills(Base):
     pdf_link = Column(String)
     text = Column(String, nullable=True)
     summary_text = Column(String)
-    updated_at = Column(DateTime)
