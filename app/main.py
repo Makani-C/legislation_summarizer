@@ -10,7 +10,8 @@ from pydantic import BaseModel
 from sqlalchemy import Column, Integer, String, DateTime, select
 from sqlalchemy.orm import declarative_base
 
-sys.path.append(os.path.dirname(os.getcwd()))
+filepath = os.path.realpath(__file__)
+sys.path.append(os.path.dirname(os.path.dirname(filepath)))
 
 from utils.database_connection import PostgresRDS
 
@@ -91,4 +92,4 @@ def get_full_bill_text(
 
     result = db_connector.execute_orm_query(query)
 
-    return result
+    return result[0]
