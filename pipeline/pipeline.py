@@ -86,6 +86,7 @@ def get_updated_data(last_pull_timestamp, table):
     query = f"""
         SELECT *  FROM {table}
         WHERE updated > '{last_pull_timestamp.strftime('%Y-%m-%d %H:%M:%S')}' 
+        LIMIT 10
         """
     data = maria_db.execute_query(query)
 
