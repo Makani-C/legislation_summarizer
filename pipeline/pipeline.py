@@ -153,7 +153,7 @@ def save_data_to_rds(model: orm.Base, data: list[dict]):
 def run_data_pipeline():
     table_mappings = [
         {
-            "mariadb_table": "lsv_bills_text",
+            "mariadb_table": "lsv_bill_text",
             "rds_orm": orm.Bills
         },
         {
