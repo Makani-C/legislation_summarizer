@@ -54,24 +54,6 @@ rds_db = connection.PostgresDB(
 )
 
 
-# Table and Column Names
-maria_table = "lsv_bill_text"
-maria_columns = [
-    "bill_id", "state_abbr", "bill_number", "text_id", "bill_text_size",
-    "bill_text_date", "bill_text_type_id", "bill_text_name", "bill_text_sort",
-    "bill_text_mime_id", "mime_type", "mime_ext", "bill_text_hash", "legiscan_url",
-    "state_url", "local_copy", "local_fragment", "state_id", "state_name",
-    "session_id", "body_id", "current_body_id", "bill_type_id", "status_id",
-    "pending_committee_id", "created", "updated"
-]
-
-rds_table = "bills"
-rds_columns = [
-    "bill_id", "state_code", "session_id", "body_id", "status_id",
-    "pdf_link", "text", "summary_text", "updated_at"
-]
-
-
 def get_last_pull_timestamp(model: orm.Base):
     """ Get the timestamp of the last pull from the RDS table.
 
@@ -173,6 +155,10 @@ def run_data_pipeline():
         {
             "mariadb_table": "lsv_bills_text",
             "rds_orm": orm.Bills
+        },
+        {
+            "mariadb_table": "ls_body",
+            "rds_orm": orm.LegislativeBody
         }
     ]
     try:

@@ -22,3 +22,15 @@ class Bills(BaseORM):
     pdf_link = Column(String)
     text = Column(String, nullable=True)
     summary_text = Column(String)
+
+
+class LegislativeBody(BaseORM):
+    __tablename__ = "legislative_body"
+
+    body_id = Column(Integer, primary_key=True)
+    state_id = Column(String)
+    role_id = Column(Integer)
+    body_short = Column(String)
+    body_name = Column(String)
+    role_short = Column(String)
+    role_name = Column(String)
