@@ -5,13 +5,7 @@ from sqlalchemy.orm import declarative_base
 Base = declarative_base()
 
 
-class BaseORM(Base):
-    __tablename__ = None
-
-    updated_at = Column(DateTime)
-
-
-class Bills(BaseORM):
+class Bills(Base):
     __tablename__ = "bills"
 
     bill_id = Column(Integer, primary_key=True)
@@ -22,9 +16,10 @@ class Bills(BaseORM):
     pdf_link = Column(String)
     text = Column(String, nullable=True)
     summary_text = Column(String)
+    updated_at = Column(DateTime)
 
 
-class LegislativeBody(BaseORM):
+class LegislativeBody(Base):
     __tablename__ = "legislative_body"
 
     body_id = Column(Integer, primary_key=True)
@@ -34,3 +29,4 @@ class LegislativeBody(BaseORM):
     body_name = Column(String)
     role_short = Column(String)
     role_name = Column(String)
+    updated_at = Column(DateTime)
