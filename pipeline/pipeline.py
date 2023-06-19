@@ -175,7 +175,7 @@ def run_data_pipeline():
             )
             logger.info(f"Got {len(legiscan_data)} records")
 
-            if mapping["rds_model"] == orm.Bills:
+            if mapping["rds_orm"] == orm.Bills:
                 # Create 'text' and 'summary_text' values
                 logger.info(f"Parsing PDF Data")
                 legiscan_data = create_text_and_summary(legiscan_data)
