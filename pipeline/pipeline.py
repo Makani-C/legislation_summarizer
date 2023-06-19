@@ -183,7 +183,7 @@ def run_data_pipeline():
             # Save the data to Postgres RDS
             logger.info(f"Saving Data to RDS")
             save_data_to_rds(
-                model=mapping["rds_model"],
+                model=mapping["rds_orm"],
                 data=legiscan_data
             )
 
