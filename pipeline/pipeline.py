@@ -138,8 +138,12 @@ def save_data_to_rds(model: orm.Base, data: list[dict]):
         try:
             orm_keys = set(inspect(model).columns.keys()) - {"updated_at"}
             for input_row in data:
+                filtered_row = {
+                    k: v for k, v in input_row.items()
+                    if k in orm_keys
+                }
                 rds_row = model(
-                    **input_row[orm_keys],
+                    **filtered_row,
                     updated_at=datetime.now()
                 )
                 rds_db.session.add(rds_row)
@@ -153,8 +157,8 @@ def save_data_to_rds(model: orm.Base, data: list[dict]):
 
 def run_data_pipeline():
     table_mappings = [
-        ("lsv_bill_text", orm.Bills),
-        ("ls_body", orm.LegislativeBody)
+        ("ls_body", orm.LegislativeBody),
+        ("lsv_bill_text", orm.Bills)
     ]
     try:
         for source_table, target_orm in table_mappings:
