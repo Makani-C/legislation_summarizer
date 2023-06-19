@@ -153,29 +153,25 @@ def save_data_to_rds(model: orm.Base, data: list[dict]):
 
 def run_data_pipeline():
     table_mappings = [
-        {
-            "mariadb_table": "lsv_bill_text",
-            "rds_orm": orm.Bills
-        },
-        {
-            "mariadb_table": "ls_body",
-            "rds_orm": orm.LegislativeBody
-        }
+        ("lsv_bill_text", orm.Bills),
+        ("ls_body", orm.LegislativeBody)
     ]
     try:
-        for mapping in table_mappings:
+        for source_table, target_orm in table_mappings:
+            logger.info(f"Pulling data for {target_orm.__tablename__} from {source_table}")
+
             # Get the timestamp of the last pull
-            last_pull_timestamp = get_last_pull_timestamp(mapping["rds_orm"])
+            last_pull_timestamp = get_last_pull_timestamp(target_orm)
 
             # Get the updated data from MariaDB
-            logger.info(f"Pulling legiscan data since {last_pull_timestamp}")
+            logger.info(f"Pulling data since {last_pull_timestamp}")
             legiscan_data = get_updated_data(
                 last_pull_timestamp=last_pull_timestamp,
-                table=mapping["mariadb_table"]
+                table=source_table
             )
             logger.info(f"Got {len(legiscan_data)} records")
 
-            if mapping["rds_orm"] == orm.Bills:
+            if target_orm == orm.Bills:
                 # Create 'text' and 'summary_text' values
                 logger.info(f"Parsing PDF Data")
                 legiscan_data = create_text_and_summary(legiscan_data)
@@ -183,7 +179,7 @@ def run_data_pipeline():
             # Save the data to Postgres RDS
             logger.info(f"Saving Data to RDS")
             save_data_to_rds(
-                model=mapping["rds_orm"],
+                model=target_orm,
                 data=legiscan_data
             )
 
