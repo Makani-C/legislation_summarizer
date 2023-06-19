@@ -20,13 +20,11 @@ class Bills(Base):
 
 
 class LegislativeBody(Base):
-    __tablename__ = "legislative_body"
+    __tablename__ = "legislative_bodies"
 
     body_id = Column(Integer, primary_key=True)
     state_id = Column(String)
     role_id = Column(Integer)
-    body_short = Column(String)
-    body_name = Column(String)
-    role_short = Column(String)
-    role_name = Column(String)
+    full_name = Column(String)
+    abbr_name = Column(String)
     updated_at = Column(DateTime)
