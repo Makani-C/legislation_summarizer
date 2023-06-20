@@ -5,6 +5,7 @@ import logging
 import requests
 import traceback
 
+from collections import namedtuple
 from datetime import datetime
 from configparser import ConfigParser
 from PyPDF2 import PdfReader
@@ -72,7 +73,7 @@ def get_last_pull_timestamp(model: orm.Base):
     return latest_updated_date or datetime.min
 
 
-def get_updated_data(last_pull_timestamp, table):
+def get_updated_data(table: str, last_pull_timestamp: datetime = None):
     """
     Get the updated data from the MariaDB table.
 
@@ -83,11 +84,15 @@ def get_updated_data(last_pull_timestamp, table):
     Returns:
         list: A list of dictionaries containing the updated data.
     """
-    query = f"""
-        SELECT *  FROM {table}
-        WHERE updated > '{last_pull_timestamp.strftime('%Y-%m-%d %H:%M:%S')}' 
-        LIMIT 10
-        """
+    select_clause = f"SELECT *  FROM {table}"
+
+    filter_clause = ""
+    if last_pull_timestamp:
+        filter_clause = f"WHERE updated > '{last_pull_timestamp.strftime('%Y-%m-%d %H:%M:%S')}'"
+
+    limit_clause = "LIMIT 10"
+
+    query = f"{select_clause} {filter_clause} {limit_clause}"
     data = maria_db.execute_query(query)
 
     return data
@@ -156,26 +161,30 @@ def save_data_to_rds(model: orm.Base, data: list[dict]):
 
 
 def run_data_pipeline():
+    PipelineConfig = namedtuple("PipelineConfig", "source_table target_orm incremental_load")
     table_mappings = [
-        ("ls_body", orm.LegislativeBody),
-        ("lsv_bill_text", orm.Bills)
+        PipelineConfig("ls_body", orm.LegislativeBody, False),
+        PipelineConfig("lsv_bill_text", orm.Bills, True)
     ]
     try:
-        for source_table, target_orm in table_mappings:
-            logger.info(f"Pulling data for {target_orm.__tablename__} from {source_table}")
+        for pipeline_config in table_mappings:
+            logger.info(f"Pulling data for {pipeline_config.target_orm.__tablename__} from {pipeline_config.source_table}")
 
-            # Get the timestamp of the last pull
-            last_pull_timestamp = get_last_pull_timestamp(target_orm)
+            last_pull_timestamp = None
+            if pipeline_config.incremental_load:
+                # Get the timestamp of the last pull
+                last_pull_timestamp = get_last_pull_timestamp(pipeline_config.target_orm)
+                logger.info(f"Target table last updated at {last_pull_timestamp}")
 
             # Get the updated data from MariaDB
-            logger.info(f"Pulling data since {last_pull_timestamp}")
+            logger.info(f"Pulling data")
             legiscan_data = get_updated_data(
-                last_pull_timestamp=last_pull_timestamp,
-                table=source_table
+                table=pipeline_config.source_table,
+                last_pull_timestamp=last_pull_timestamp
             )
             logger.info(f"Got {len(legiscan_data)} records")
 
-            if target_orm == orm.Bills:
+            if pipeline_config.target_orm == orm.Bills:
                 # Create 'text' and 'summary_text' values
                 logger.info(f"Parsing PDF Data")
                 legiscan_data = create_text_and_summary(legiscan_data)
@@ -183,7 +192,7 @@ def run_data_pipeline():
             # Save the data to Postgres RDS
             logger.info(f"Saving Data to RDS")
             save_data_to_rds(
-                model=target_orm,
+                model=pipeline_config.target_orm,
                 data=legiscan_data
             )
 
