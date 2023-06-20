@@ -130,12 +130,13 @@ def create_text_and_summary(data):
     return data
 
 
-def save_data_to_rds(model: orm.Base, data: list[dict]):
+def save_data_to_rds(model: orm.Base, field_mapping: dict, data: list[dict]):
     """
     Save the data to the RDS table.
 
     Args:
         model (orm.Base): ORM to describe table to save to
+        field_mapping (dict): maps source table columns to target orm
         data (list): A list of dictionaries containing the data to be saved.
     """
     if data:
@@ -145,7 +146,8 @@ def save_data_to_rds(model: orm.Base, data: list[dict]):
             orm_keys = set(inspect(model).columns.keys()) - {"updated_at"}
             for input_row in data:
                 filtered_row = {
-                    k: v for k, v in input_row.items()
+                    field_mapping[k]: v
+                    for k, v in input_row.items()
                     if k in orm_keys
                 }
                 rds_row = model(
@@ -153,7 +155,6 @@ def save_data_to_rds(model: orm.Base, data: list[dict]):
                     updated_at=datetime.now()
                 )
                 rds_db.session.add(rds_row)
-                logger.info(rds_row)
 
         except IntegrityError as e:
             rds_db.session.rollback()
@@ -163,10 +164,26 @@ def save_data_to_rds(model: orm.Base, data: list[dict]):
 
 
 def run_data_pipeline():
-    PipelineConfig = namedtuple("PipelineConfig", "source_table target_orm incremental_load")
+    PipelineConfig = namedtuple("PipelineConfig", "source_table target_orm field_mapping incremental_load")
     table_mappings = [
-        PipelineConfig("ls_body", orm.LegislativeBody, False),
-        PipelineConfig("lsv_bill_text", orm.Bills, True)
+        PipelineConfig(
+            "ls_body",
+            orm.LegislativeBody,
+            {
+                "body_id": "body_id",
+                "state_id": "state_id",
+                "role_id": "role_id",
+                "body_name": "full_name",
+                "body_short": "abbr_name"
+            },
+            False
+        ),
+        PipelineConfig(
+            "lsv_bill_text",
+            orm.Bills,
+            {},
+            True
+        )
     ]
     try:
         for pipeline_config in table_mappings:
@@ -196,6 +213,7 @@ def run_data_pipeline():
             logger.info(f"Saving Data to RDS")
             save_data_to_rds(
                 model=pipeline_config.target_orm,
+                field_mapping=pipeline_config.field_mapping,
                 data=legiscan_data
             )
 
