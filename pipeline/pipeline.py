@@ -158,6 +158,7 @@ def save_data_to_rds(model: orm.Base, field_mapping: dict, data: list[dict]):
                 )
                 print(rds_row.__dict__)
                 rds_db.session.add(rds_row)
+            rds_db.session.commit()
 
         except IntegrityError as e:
             rds_db.session.rollback()
