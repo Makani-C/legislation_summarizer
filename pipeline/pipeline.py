@@ -90,7 +90,7 @@ def get_updated_data(table: str, last_pull_timestamp: datetime = None):
     if last_pull_timestamp:
         filter_clause = f"WHERE updated > '{last_pull_timestamp.strftime('%Y-%m-%d %H:%M:%S')}'"
 
-    limit_clause = "LIMIT 10"
+        limit_clause = "LIMIT 10"
 
     query = f"{select_clause} {filter_clause} {limit_clause}"
     data = maria_db.execute_query(query)
@@ -183,6 +183,7 @@ def run_data_pipeline():
                 last_pull_timestamp=last_pull_timestamp
             )
             logger.info(f"Got {len(legiscan_data)} records")
+            logger.info(f"{legiscan_data[0]}")
 
             if pipeline_config.target_orm == orm.Bills:
                 # Create 'text' and 'summary_text' values
