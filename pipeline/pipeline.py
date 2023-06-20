@@ -145,6 +145,7 @@ def save_data_to_rds(model: orm.Base, field_mapping: dict, data: list[dict]):
         try:
             orm_keys = set(inspect(model).columns.keys()) - {"updated_at"}
             for input_row in data:
+                print(input_row)
                 filtered_row = {
                     field_mapping[k]: v
                     for k, v in input_row.items()
@@ -160,7 +161,6 @@ def save_data_to_rds(model: orm.Base, field_mapping: dict, data: list[dict]):
 
         except IntegrityError as e:
             rds_db.session.rollback()
-            print("FUCKKKKKKKK")
             raise e
         finally:
             rds_db.close_connection()
