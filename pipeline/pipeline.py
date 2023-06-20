@@ -150,14 +150,17 @@ def save_data_to_rds(model: orm.Base, field_mapping: dict, data: list[dict]):
                     for k, v in input_row.items()
                     if k in orm_keys
                 }
+                print(filtered_row)
                 rds_row = model(
                     **filtered_row,
                     updated_at=datetime.now()
                 )
+                print(rds_row.dict())
                 rds_db.session.add(rds_row)
 
         except IntegrityError as e:
             rds_db.session.rollback()
+            print("FUCKKKKKKKK")
             raise e
         finally:
             rds_db.close_connection()
