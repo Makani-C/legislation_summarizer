@@ -1,11 +1,11 @@
 from sqlalchemy import Column, Integer, String, DateTime
-from sqlalchemy.orm import declarative_base
+from sqlalchemy.orm import declarative_base, relationship
 
 
 Base = declarative_base()
 
 
-class Bills(Base):
+class Bill(Base):
     __tablename__ = "bills"
 
     bill_id = Column(Integer, primary_key=True)
@@ -18,6 +18,8 @@ class Bills(Base):
     summary_text = Column(String)
     updated_at = Column(DateTime)
 
+    body = relationship("LegislativeBody", back_populates="bill")
+
 
 class LegislativeBody(Base):
     __tablename__ = "legislative_bodies"
@@ -28,3 +30,5 @@ class LegislativeBody(Base):
     full_name = Column(String)
     abbr_name = Column(String)
     updated_at = Column(DateTime)
+
+    bill = relationship("Bill", back_populates="body")

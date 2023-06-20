@@ -184,7 +184,7 @@ def run_data_pipeline():
         ),
         PipelineConfig(
             "lsv_bill_text",
-            orm.Bills,
+            orm.Bill,
             {},
             True
         )
@@ -208,7 +208,7 @@ def run_data_pipeline():
             logger.info(f"Got {len(legiscan_data)} records")
             logger.info(f"{legiscan_data[0]}")
 
-            if pipeline_config.target_orm == orm.Bills:
+            if pipeline_config.target_orm == orm.Bill:
                 # Create 'text' and 'summary_text' values
                 logger.info(f"Parsing PDF Data")
                 legiscan_data = create_text_and_summary(legiscan_data)

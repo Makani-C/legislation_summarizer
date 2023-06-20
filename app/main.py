@@ -56,10 +56,10 @@ def get_bills(
 ):
     db_connector.connect()
 
-    query = db_connector.session.query(orm.Bills)
+    query = db_connector.session.query(orm.Bill)
 
     if bill_id is not None:
-        query = query.filter(orm.Bills.bill_id == bill_id)
+        query = query.filter(orm.Bill.bill_id == bill_id)
     if limit:
         query = query.limit(limit)
 
@@ -72,7 +72,7 @@ def get_bills(
 def get_full_bill_text(
         bill_id: int
 ) -> str:
-    query = select(orm.Bills.text).where(orm.Bills.bill_id == bill_id)
+    query = select(orm.Bill.text).where(orm.Bill.bill_id == bill_id)
 
     result = db_connector.execute_orm_query(query)
 
