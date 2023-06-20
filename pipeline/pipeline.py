@@ -155,7 +155,7 @@ def save_data_to_rds(model: orm.Base, field_mapping: dict, data: list[dict]):
                     **filtered_row,
                     updated_at=datetime.now()
                 )
-                print(rds_row.dict())
+                print(rds_row.__dict__)
                 rds_db.session.add(rds_row)
 
         except IntegrityError as e:
