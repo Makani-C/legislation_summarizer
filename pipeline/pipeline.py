@@ -87,6 +87,7 @@ def get_updated_data(table: str, last_pull_timestamp: datetime = None):
     select_clause = f"SELECT *  FROM {table}"
 
     filter_clause = ""
+    limit_clause = ""
     if last_pull_timestamp:
         filter_clause = f"WHERE updated > '{last_pull_timestamp.strftime('%Y-%m-%d %H:%M:%S')}'"
 
