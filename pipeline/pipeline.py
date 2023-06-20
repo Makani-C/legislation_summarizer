@@ -149,7 +149,7 @@ def save_data_to_rds(model: orm.Base, field_mapping: dict, data: list[dict]):
                 filtered_row = {
                     field_mapping[k]: v
                     for k, v in input_row.items()
-                    if k in orm_keys
+                    if field_mapping[k] in orm_keys
                 }
                 print(filtered_row)
                 rds_row = model(
