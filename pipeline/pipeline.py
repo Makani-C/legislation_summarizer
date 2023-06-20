@@ -153,6 +153,7 @@ def save_data_to_rds(model: orm.Base, data: list[dict]):
                     updated_at=datetime.now()
                 )
                 rds_db.session.add(rds_row)
+                logger.info(rds_row)
 
         except IntegrityError as e:
             rds_db.session.rollback()
