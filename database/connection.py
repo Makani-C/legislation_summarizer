@@ -44,7 +44,6 @@ class DatabaseConnector:
 
     def close_connection(self):
         self.session.close()
-        self.engine.dispose()
         print(f"Closed connection to {self}")
 
     def get_connection_string(self):
