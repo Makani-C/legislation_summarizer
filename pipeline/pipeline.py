@@ -93,7 +93,7 @@ def get_updated_data(source_query: str, last_pull_timestamp: datetime = None):
 
         limit_clause = "LIMIT 10"
 
-    query = f"{select_clause} {filter_clause} {limit_clause}"
+    query = f"{select_clause} {filter_clause} {limit_clause};"
     data = maria_db.execute_query(query)
 
     return data
