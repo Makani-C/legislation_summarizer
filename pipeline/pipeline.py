@@ -90,7 +90,6 @@ def get_updated_data(source_query: str, last_pull_timestamp: datetime = None):
     limit_clause = ""
     if last_pull_timestamp:
         filter_clause = f"WHERE updated > '{last_pull_timestamp.strftime('%Y-%m-%d %H:%M:%S')}'"
-
         limit_clause = "LIMIT 10"
 
     query = f"{select_clause} {filter_clause} {limit_clause};"
@@ -209,7 +208,7 @@ def run_data_pipeline():
             # Get the updated data from MariaDB
             logger.info(f"Pulling data")
             legiscan_data = get_updated_data(
-                table=pipeline_config.source_table,
+                source_query=pipeline_config.source_query,
                 last_pull_timestamp=last_pull_timestamp
             )
             logger.info(f"Got {len(legiscan_data)} records")
