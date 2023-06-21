@@ -212,7 +212,6 @@ def run_data_pipeline():
                 last_pull_timestamp=last_pull_timestamp
             )
             logger.info(f"Got {len(legiscan_data)} records")
-            logger.info(f"{legiscan_data[0]}")
 
             if pipeline_config.target_orm == orm.Bill:
                 # Create 'text' and 'summary_text' values

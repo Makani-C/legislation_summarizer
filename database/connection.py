@@ -1,6 +1,13 @@
+import logging
+
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import IntegrityError
+
+
+# Configure logging
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+logger = logging.getLogger(__name__)
 
 
 def in_session(func):
@@ -42,11 +49,11 @@ class DatabaseConnector:
         self.engine = create_engine(connection_string)
         session = sessionmaker(bind=self.engine)
         self.session = session()
-        print(f"Connected to {self}")
+        logging.info(f"Connected to {self}")
 
     def close_connection(self):
         self.session.close()
-        print(f"Closed connection to {self}")
+        logging.info(f"Closed connection to {self}")
 
     def get_connection_string(self):
         raise NotImplementedError("Subclasses must implement get_connection_string()")
