@@ -38,6 +38,8 @@ class DatabaseConnector:
         )
 
     def connect(self):
+        connection_string = self.get_connection_string()
+        self.engine = create_engine(connection_string)
         session = sessionmaker(bind=self.engine)
         self.session = session()
         print(f"Connected to {self}")
