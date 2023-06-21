@@ -73,7 +73,7 @@ def get_last_pull_timestamp(model: orm.Base):
     return latest_updated_date or datetime.min
 
 
-def get_updated_data(table: str, last_pull_timestamp: datetime = None):
+def get_updated_data(source_query: str, last_pull_timestamp: datetime = None):
     """
     Get the updated data from the MariaDB table.
 
@@ -84,7 +84,7 @@ def get_updated_data(table: str, last_pull_timestamp: datetime = None):
     Returns:
         list: A list of dictionaries containing the updated data.
     """
-    select_clause = f"SELECT *  FROM {table}"
+    select_clause = source_query
 
     filter_clause = ""
     limit_clause = ""
@@ -145,18 +145,15 @@ def save_data_to_rds(model: orm.Base, field_mapping: dict, data: list[dict]):
         try:
             orm_keys = set(inspect(model).columns.keys()) - {"updated_at"}
             for input_row in data:
-                print(input_row)
                 filtered_row = {
                     field_mapping[k]: v
                     for k, v in input_row.items()
                     if field_mapping.get(k) in orm_keys
                 }
-                print(filtered_row)
                 rds_row = model(
                     **filtered_row,
                     updated_at=datetime.now()
                 )
-                print(rds_row.__dict__)
                 rds_db.session.add(rds_row)
             rds_db.session.commit()
 
@@ -168,10 +165,10 @@ def save_data_to_rds(model: orm.Base, field_mapping: dict, data: list[dict]):
 
 
 def run_data_pipeline():
-    PipelineConfig = namedtuple("PipelineConfig", "source_table target_orm field_mapping incremental_load")
+    PipelineConfig = namedtuple("PipelineConfig", "source_query target_orm field_mapping incremental_load")
     table_mappings = [
         PipelineConfig(
-            "ls_body",
+            "SELECT body_id, state_id, role_id, body_name, body_short FROM ls_body",
             orm.LegislativeBody,
             {
                 "body_id": "body_id",
@@ -183,15 +180,25 @@ def run_data_pipeline():
             False
         ),
         PipelineConfig(
-            "lsv_bill_text",
+            """SELECT b.bill_id, b.state_abbr, b.session_id, b.body_id, b.status_id, b.state_url, s.progress_desc as status
+               FROM lsv_bill_text b LEFT JOIN ls_progress s 
+               ON b.status_id = s.progress_event_id
+            """,
             orm.Bill,
-            {},
+            {
+                "bill_id": "bill_id",
+                "state_abbr": "state_code",
+                "session_id": "session_id",
+                "body_id": "body_id",
+                "status_id": "status_id",
+                "state_url": "pdf_link"
+            },
             True
         )
     ]
     try:
         for pipeline_config in table_mappings:
-            logger.info(f"Pulling data for {pipeline_config.target_orm.__tablename__} from {pipeline_config.source_table}")
+            logger.info(f"Pulling data for {pipeline_config.target_orm.__tablename__}")
 
             last_pull_timestamp = None
             if pipeline_config.incremental_load:

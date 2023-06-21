@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
 from sqlalchemy.orm import declarative_base, relationship
 
 
@@ -11,7 +11,7 @@ class Bill(Base):
     bill_id = Column(Integer, primary_key=True)
     state_code = Column(String)
     session_id = Column(Integer)
-    body_id = Column(Integer)
+    body_id = Column(Integer, ForeignKey("legislative_bodies.body_id"))
     status_id = Column(Integer)
     pdf_link = Column(String)
     text = Column(String, nullable=True)
