@@ -129,7 +129,7 @@ def create_text_and_summary(data):
     return data
 
 
-def save_data_to_rds(model: orm.Base, field_mapping: dict, data: list[dict]):
+def save_data_to_rds(model: orm.Base, field_mapping: dict, data: list):
     """
     Save the data to the RDS table.
 
@@ -197,7 +197,7 @@ def run_data_pipeline():
     ]
     try:
         for pipeline_config in table_mappings:
-            logger.info(f"Pulling data for {pipeline_config.target_orm.__tablename__}")
+            logger.info(f"Updating {pipeline_config.target_orm.__tablename__}")
 
             last_pull_timestamp = None
             if pipeline_config.incremental_load:
@@ -206,7 +206,7 @@ def run_data_pipeline():
                 logger.info(f"Target table last updated at {last_pull_timestamp}")
 
             # Get the updated data from MariaDB
-            logger.info(f"Pulling data")
+            logger.info(f"Pulling data from legiscan_api")
             legiscan_data = get_updated_data(
                 source_query=pipeline_config.source_query,
                 last_pull_timestamp=last_pull_timestamp

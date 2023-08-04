@@ -62,7 +62,7 @@ class Bill(BaseModel):
     body: LegislativeBody
     status_id: int
     pdf_link: str
-    summary_text: str
+    summary_text: str = ""
     updated_at: datetime
 
     class Config:
