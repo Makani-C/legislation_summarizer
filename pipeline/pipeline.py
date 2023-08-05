@@ -16,6 +16,7 @@ root_dir = os.path.dirname(os.path.dirname(filepath))
 sys.path.append(root_dir)
 
 from database import connectors, orm
+from summarizer import summarize_text
 
 # Configure logging
 logging.basicConfig(
@@ -92,12 +93,12 @@ def create_text_and_summary(data):
         pdf_file = PdfReader(on_fly_mem_obj)
 
         # Extract text from each page and concatenate into a single string
-        text = ""
+        bill_text = ""
         for page in pdf_file.pages:
-            text += page.extract_text()
+            bill_text += page.extract_text()
 
-        row["text"] = text
-        row["summary_text"] = ""  # Add your logic to create the 'summary_text' value
+        row["text"] = bill_text
+        row["summary_text"] = summarize_text(bill_text)
 
         if (index + 1) % 10 == 0:
             logger.info(
