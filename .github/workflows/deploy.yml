@@ -1,10 +1,11 @@
 # Builds docker and deploys to vultr server
 
 name: Deploy
-on: workflow_dispatch
-inputs:
-  semver:
-    required: true
+on:
+  workflow_dispatch:
+    inputs:
+      semver:
+        required: true
 env:
   deploy_image: ${{ secrets.DOCKERHUB_USERNAME }}/legislation_summarizer:{{ github.event.inputs.semver }}
   container_name: legislation_summarizer
