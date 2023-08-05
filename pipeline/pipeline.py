@@ -187,7 +187,7 @@ def run_data_pipeline(limit: int = None, state_list: list = None) -> None:
                 "status_id": "status_id",
                 "state_url": "pdf_link",
             },
-            "incremental_load": True,
+            "incremental_load": False,
         },
     }
     if state_list:
