@@ -21,7 +21,6 @@ def get_database_configuration():
 
 class RDSConnection(PostgresDB):
     def __init__(self):
-        # Read the database credentials from config.ini
         config = get_database_configuration()
         super().__init__(
             host=config.get("rds", "rds_host"),
@@ -34,4 +33,10 @@ class RDSConnection(PostgresDB):
 
 class LegiscanDBConnection(MariaDB):
     def __init__(self):
-        pass
+        config = get_database_configuration()
+        super().__init__(
+            host=config.get("maria_db", "maria_host"),
+            user=config.get("maria_db", "maria_user"),
+            password=config.get("maria_db", "maria_password"),
+            database=config.get("maria_db", "maria_database"),
+        )
