@@ -1,0 +1,8 @@
+name: New Deploy
+on: workflow_dispatch
+inputs:
+  semver:
+    required: true
+env:
+  deploy_image: ${{ secrets.DOCKERHUB_USERNAME }}/legislation_summarizer:0.0
+  container_name: legislation_summarizer
