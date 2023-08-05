@@ -237,4 +237,4 @@ def run_data_pipeline(limit: int = None, state_list: list = None) -> None:
 
 
 if __name__ == "__main__":
-    run_data_pipeline(state_list=["US"])
+    run_data_pipeline(state_list=["US"], limit=200)
