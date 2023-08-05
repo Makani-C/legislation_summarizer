@@ -65,7 +65,6 @@ def get_updated_data(source_query: str, last_pull_timestamp: datetime = None):
         filter_clause = (
             f"WHERE updated > '{last_pull_timestamp.strftime('%Y-%m-%d %H:%M:%S')}'"
         )
-        limit_clause = "LIMIT 10"
 
     query = f"{select_clause} {filter_clause} {limit_clause};"
     data = maria_db.execute_query(query)
