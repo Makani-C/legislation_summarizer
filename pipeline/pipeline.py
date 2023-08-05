@@ -7,7 +7,6 @@ import traceback
 
 from collections import namedtuple
 from datetime import datetime
-from configparser import ConfigParser
 from PyPDF2 import PdfReader
 from sqlalchemy import func, inspect
 from sqlalchemy.exc import IntegrityError

@@ -37,7 +37,7 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           push: true
-          file: Dockerfile
+          file: app.Dockerfile
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/legislation_summarizer:${{ github.event.inputs.semver }}
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache-new
