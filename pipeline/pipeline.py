@@ -51,8 +51,8 @@ def get_updated_data(source_query: str, last_pull_timestamp: datetime = None):
     Get the updated data from the MariaDB table.
 
     Args:
+        source_query (str): query to pull the source Legiscan data
         last_pull_timestamp (datetime.datetime): The timestamp of the last pull.
-        table (str): MariaDB table to pull from
 
     Returns:
         list: A list of dictionaries containing the updated data.
@@ -67,6 +67,7 @@ def get_updated_data(source_query: str, last_pull_timestamp: datetime = None):
         )
 
     query = f"{select_clause} {filter_clause} {limit_clause};"
+    print(query)
     data = maria_db.execute_query(query)
 
     return data
