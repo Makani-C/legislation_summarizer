@@ -1,12 +1,9 @@
-# Builds docker and deploys to vultr server
-
-name: Deploy
+name: Publish Application
 on:
   workflow_dispatch:
     inputs:
       semver:
         required: true
-
 
 jobs:
   docker:
