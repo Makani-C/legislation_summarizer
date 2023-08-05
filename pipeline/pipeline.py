@@ -46,28 +46,31 @@ def get_last_pull_timestamp(model: orm.Base):
     return latest_updated_date or datetime.min
 
 
-def get_updated_data(source_query: str, last_pull_timestamp: datetime = None):
+def get_updated_data(table_config: dict, last_pull_timestamp: datetime = None):
     """
     Get the updated data from the MariaDB table.
 
     Args:
-        source_query (str): query to pull the source Legiscan data
+        table_config (dict): Configuration for pulling legiscan data
         last_pull_timestamp (datetime.datetime): The timestamp of the last pull.
 
     Returns:
         list: A list of dictionaries containing the updated data.
     """
-    select_clause = source_query
+    select_clause = table_config["source_query"]
 
-    filter_clause = ""
-    limit_clause = ""
+    filter_clause = table_config.get("filter_clause", "")
     if last_pull_timestamp:
-        filter_clause = (
-            f"WHERE updated > '{last_pull_timestamp.strftime('%Y-%m-%d %H:%M:%S')}'"
-        )
+        if not filter_clause:
+            filter_clause = "WHERE "
+        else:
+            filter_clause = f"{filter_clause} AND "
+        last_pull_string = last_pull_timestamp.strftime('%Y-%m-%d %H:%M:%S')
+        filter_clause = f"{filter_clause} updated > '{last_pull_string}'"
+
+    limit_clause = table_config.get("limit_clause", "")
 
     query = f"{select_clause} {filter_clause} {limit_clause};"
-    print(query)
     data = maria_db.execute_query(query)
 
     return data
@@ -138,7 +141,7 @@ def save_data_to_rds(model: orm.Base, field_mapping: dict, data: list) -> None:
             rds_db.close_connection()
 
 
-def run_data_pipeline() -> None:
+def run_data_pipeline(limit: int = None, state_list: list = None) -> None:
     """
     Run the data pipeline to update target tables with data from the source.
 
@@ -154,9 +157,9 @@ def run_data_pipeline() -> None:
     Raises:
         Exception: If any error occurs during the ETL process.
     """
-    table_mappings = [
+    table_mappings = {
         # Configuration for the 'LegislativeBody' table
-        {
+        "body": {
             "source_query": "SELECT body_id, state_id, role_id, body_name, body_short FROM ls_body",
             "target_orm": orm.LegislativeBody,
             "field_mapping": {
@@ -169,7 +172,7 @@ def run_data_pipeline() -> None:
             "incremental_load": False,
         },
         # Configuration for the 'Bill' table
-        {
+        "bill": {
             "source_query": """SELECT b.bill_id, b.state_abbr, b.session_id, b.body_id, b.status_id, b.state_url, s.progress_desc as status
                                FROM lsv_bill_text b LEFT JOIN ls_progress s 
                                ON b.status_id = s.progress_event_id
@@ -185,10 +188,15 @@ def run_data_pipeline() -> None:
             },
             "incremental_load": True,
         },
-    ]
+    }
+    if state_list:
+        state_list_string = "', '".join(state_list)
+        table_mappings["bill"]["filter_clause"] = f"WHERE state_abbr IN ('{state_list_string}')"
+    if limit:
+        table_mappings["bill"]["limit_clause"] = f"LIMIT {limit}"
 
     try:
-        for pipeline_config in table_mappings:
+        for table_id, pipeline_config in table_mappings.items():
             logger.info(f"Updating {pipeline_config['target_orm'].__tablename__}")
 
             # Check if incremental load is enabled and get the timestamp of the last pull
@@ -200,7 +208,7 @@ def run_data_pipeline() -> None:
             # Fetch updated data from MariaDB
             logger.info(f"Pulling data from legiscan_api")
             legiscan_data = get_updated_data(
-                source_query=pipeline_config["source_query"],
+                table_config=pipeline_config,
                 last_pull_timestamp=last_pull_timestamp,
             )
             logger.info(f"Got {len(legiscan_data)} records")
@@ -228,4 +236,4 @@ def run_data_pipeline() -> None:
 
 
 if __name__ == "__main__":
-    run_data_pipeline()
+    run_data_pipeline(state_list=["US"])
