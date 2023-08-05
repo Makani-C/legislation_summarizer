@@ -6,12 +6,15 @@ from sqlalchemy.exc import IntegrityError
 
 
 # Configure logging
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
 
 
 def in_session(func):
     """Decorator that ensures a database connection is established before executing a method."""
+
     def wrapper(self, *args, **kwargs):
         if self.session is None or not self.session.is_active:
             self.connect()
@@ -22,11 +25,13 @@ def in_session(func):
             raise e
         finally:
             self.close_connection()
+
     return wrapper
 
 
 class DatabaseConnector:
     """Base class for connecting to a database."""
+
     def __init__(self, host, user, password, database):
         self.host = host
         self.user = user
@@ -38,11 +43,7 @@ class DatabaseConnector:
     def sessionmaker(self):
         connection_string = self.get_connection_string()
         self.engine = create_engine(connection_string)
-        return sessionmaker(
-            autocommit=False,
-            autoflush=False,
-            bind=self.engine
-        )
+        return sessionmaker(autocommit=False, autoflush=False, bind=self.engine)
 
     def connect(self):
         connection_string = self.get_connection_string()
@@ -60,7 +61,7 @@ class DatabaseConnector:
 
     @in_session
     def execute_query(self, query: str, params=None):
-        """ Execute a query and return the result as a list of dictionaries.
+        """Execute a query and return the result as a list of dictionaries.
 
         Args:
             query (str): The SQL query to execute.
@@ -78,7 +79,7 @@ class DatabaseConnector:
 
     @in_session
     def execute_orm_query(self, query):
-        """ Execute an ORM query and return the result.
+        """Execute an ORM query and return the result.
 
         Args:
             query: The SQLAlchemy query to execute.
@@ -90,12 +91,13 @@ class DatabaseConnector:
 
 
 class MariaDB(DatabaseConnector):
-
     def __repr__(self):
         return f"MariaDB at {self.host}/{self.database}"
 
     def get_connection_string(self):
-        return f"mysql+pymysql://{self.user}:{self.password}@{self.host}/{self.database}"
+        return (
+            f"mysql+pymysql://{self.user}:{self.password}@{self.host}/{self.database}"
+        )
 
 
 class PostgresDB(DatabaseConnector):
@@ -111,7 +113,7 @@ class PostgresDB(DatabaseConnector):
 
     @in_session
     def execute_transaction(self, queries: list):
-        """ Execute a transaction with a list of queries.
+        """Execute a transaction with a list of queries.
 
         Args:
             queries (list): A list of tuples containing (query, params) pairs.

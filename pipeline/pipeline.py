@@ -16,47 +16,21 @@ filepath = os.path.realpath(__file__)
 root_dir = os.path.dirname(os.path.dirname(filepath))
 sys.path.append(root_dir)
 
-from database import connection, orm
+from database import connectors, orm
 
 # Configure logging
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
 
-# Read configuration file
-config = ConfigParser()
-config.read(f"{root_dir}/config.ini")
-
-# Read database credentials
-maria_host = config.get("maria_db", "maria_host")
-maria_user = config.get("maria_db", "maria_user")
-maria_password = config.get("maria_db", "maria_password")
-maria_database = config.get("maria_db", "maria_database")
-
-# Read RDS credentials
-rds_host = config.get("rds", "rds_host")
-rds_port = config.get("rds", "rds_port")
-rds_user = config.get("rds", "rds_user")
-rds_password = config.get("rds", "rds_password")
-rds_database = config.get("rds", "rds_database")
-
 # Initialize MariaDB and RDS instances
-maria_db = connection.MariaDB(
-    host=maria_host,
-    user=maria_user,
-    password=maria_password,
-    database=maria_database
-)
-rds_db = connection.PostgresDB(
-    host=rds_host,
-    port=rds_port,
-    user=rds_user,
-    password=rds_password,
-    database=rds_database
-)
+maria_db = connectors.LegiscanDBConnection()
+rds_db = connectors.RDSConnection()
 
 
 def get_last_pull_timestamp(model: orm.Base):
-    """ Get the timestamp of the last pull from the RDS table.
+    """Get the timestamp of the last pull from the RDS table.
 
     Args:
         model (orm.Base): RDS table to get timestamp for
@@ -89,7 +63,9 @@ def get_updated_data(source_query: str, last_pull_timestamp: datetime = None):
     filter_clause = ""
     limit_clause = ""
     if last_pull_timestamp:
-        filter_clause = f"WHERE updated > '{last_pull_timestamp.strftime('%Y-%m-%d %H:%M:%S')}'"
+        filter_clause = (
+            f"WHERE updated > '{last_pull_timestamp.strftime('%Y-%m-%d %H:%M:%S')}'"
+        )
         limit_clause = "LIMIT 10"
 
     query = f"{select_clause} {filter_clause} {limit_clause};"
@@ -125,7 +101,9 @@ def create_text_and_summary(data):
         row["summary_text"] = ""  # Add your logic to create the 'summary_text' value
 
         if (index + 1) % 10 == 0:
-            logger.info(f"Completed text extraction for {index + 1} of {number_of_rows}")
+            logger.info(
+                f"Completed text extraction for {index + 1} of {number_of_rows}"
+            )
     return data
 
 
@@ -149,10 +127,7 @@ def save_data_to_rds(model: orm.Base, field_mapping: dict, data: list):
                     for k, v in input_row.items()
                     if field_mapping.get(k) in orm_keys
                 }
-                rds_row = model(
-                    **filtered_row,
-                    updated_at=datetime.now()
-                )
+                rds_row = model(**filtered_row, updated_at=datetime.now())
                 rds_db.session.merge(rds_row)
             rds_db.session.commit()
 
@@ -164,7 +139,9 @@ def save_data_to_rds(model: orm.Base, field_mapping: dict, data: list):
 
 
 def run_data_pipeline():
-    PipelineConfig = namedtuple("PipelineConfig", "source_query target_orm field_mapping incremental_load")
+    PipelineConfig = namedtuple(
+        "PipelineConfig", "source_query target_orm field_mapping incremental_load"
+    )
     table_mappings = [
         PipelineConfig(
             "SELECT body_id, state_id, role_id, body_name, body_short FROM ls_body",
@@ -174,9 +151,9 @@ def run_data_pipeline():
                 "state_id": "state_id",
                 "role_id": "role_id",
                 "body_name": "full_name",
-                "body_short": "abbr_name"
+                "body_short": "abbr_name",
             },
-            False
+            False,
         ),
         PipelineConfig(
             """SELECT b.bill_id, b.state_abbr, b.session_id, b.body_id, b.status_id, b.state_url, s.progress_desc as status
@@ -190,10 +167,10 @@ def run_data_pipeline():
                 "session_id": "session_id",
                 "body_id": "body_id",
                 "status_id": "status_id",
-                "state_url": "pdf_link"
+                "state_url": "pdf_link",
             },
-            True
-        )
+            True,
+        ),
     ]
     try:
         for pipeline_config in table_mappings:
@@ -202,14 +179,16 @@ def run_data_pipeline():
             last_pull_timestamp = None
             if pipeline_config.incremental_load:
                 # Get the timestamp of the last pull
-                last_pull_timestamp = get_last_pull_timestamp(pipeline_config.target_orm)
+                last_pull_timestamp = get_last_pull_timestamp(
+                    pipeline_config.target_orm
+                )
                 logger.info(f"Target table last updated at {last_pull_timestamp}")
 
             # Get the updated data from MariaDB
             logger.info(f"Pulling data from legiscan_api")
             legiscan_data = get_updated_data(
                 source_query=pipeline_config.source_query,
-                last_pull_timestamp=last_pull_timestamp
+                last_pull_timestamp=last_pull_timestamp,
             )
             logger.info(f"Got {len(legiscan_data)} records")
 
@@ -223,7 +202,7 @@ def run_data_pipeline():
             save_data_to_rds(
                 model=pipeline_config.target_orm,
                 field_mapping=pipeline_config.field_mapping,
-                data=legiscan_data
+                data=legiscan_data,
             )
 
     except Exception as e:

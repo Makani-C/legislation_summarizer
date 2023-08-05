@@ -4,6 +4,6 @@ COPY ./requirements.txt /app/requirements.txt
 
 RUN pip install --no-cache-dir --upgrade -r /app/requirements.txt
 
-COPY ./config.ini /config.ini
+COPY database/config.ini /config.ini
 COPY ./app /app
-COPY ./utils /utils
+COPY ./database /app/database

@@ -1,36 +1,18 @@
-import os
-import sys
-
 from fastapi import FastAPI, Depends
 from datetime import datetime
 from typing import Optional
-from configparser import ConfigParser
 from pydantic import BaseModel
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-filepath = os.path.realpath(__file__)
-root_dir = os.path.dirname(os.path.dirname(filepath))
-sys.path.append(root_dir)
-
-from database import connection, orm
+from database import connectors, orm
 
 # Create a FastAPI app
 app = FastAPI()
 
-# Read the database credentials from config.ini
-config = ConfigParser()
-config.read(f"{root_dir}/config.ini")
-
 # Initialize the database connector
-db_connector = connection.PostgresDB(
-    host=config.get("rds", "rds_host"),
-    port=config.getint("rds", "rds_port"),
-    user=config.get("rds", "rds_user"),
-    password=config.get("rds", "rds_password"),
-    database=config.get("rds", "rds_database")
-)
+db_connector = connectors.RDSConnection()
 SessionLocal = db_connector.sessionmaker()
 
 
@@ -62,7 +44,7 @@ class Bill(BaseModel):
     body: LegislativeBody
     status_id: int
     pdf_link: str
-    summary_text: str = ""
+    summary_text: Optional[str] = ""
     updated_at: datetime
 
     class Config:
@@ -72,15 +54,17 @@ class Bill(BaseModel):
 # Define a route to get all bills
 @app.get("/bills", response_model=list[Bill])
 def get_bills(
-        bill_id: Optional[int] = None,
-        limit: int = 10,
-        db: Session = Depends(get_db)
+    bill_id: Optional[int] = None,
+    state_abbr: Optional[str] = None,
+    limit: int = 10,
+    db: Session = Depends(get_db),
 ):
-
     query = db.query(orm.Bill)
 
     if bill_id is not None:
         query = query.filter(orm.Bill.bill_id == bill_id)
+    elif state_abbr is not None:
+        query = query.filter(orm.Bill.state_code == state_abbr)
     if limit:
         query = query.limit(limit)
 
@@ -89,11 +73,8 @@ def get_bills(
     return results
 
 
-
 @app.get("/full_bill_text")
-def get_full_bill_text(
-        bill_id: int
-) -> str:
+def get_full_bill_text(bill_id: int) -> str:
     query = select(orm.Bill.text).where(orm.Bill.bill_id == bill_id)
 
     result = db_connector.execute_orm_query(query)
