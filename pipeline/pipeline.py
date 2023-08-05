@@ -138,10 +138,31 @@ def save_data_to_rds(model: orm.Base, field_mapping: dict, data: list):
             rds_db.close_connection()
 
 
-def run_data_pipeline():
+def run_data_pipeline() -> None:
+    """
+    Run the data pipeline to update target tables with data from the source.
+
+    This function performs the ETL (Extract, Transform, Load) process to update target tables
+    using data fetched from a source query. It fetches data from MariaDB, processes it (if needed),
+    and saves it to a target table in Postgres RDS.
+
+    The ETL process can include incremental loads and data parsing for specific target tables.
+
+    Note: This function uses a predefined `PipelineConfig` namedtuple to specify the configurations
+    for each data table in the pipeline.
+
+    Returns:
+        None
+
+    Raises:
+        Exception: If any error occurs during the ETL process.
+    """
+    # Define a named tuple to hold the configuration for each table in the pipeline
     PipelineConfig = namedtuple(
         "PipelineConfig", "source_query target_orm field_mapping incremental_load"
     )
+
+    # Define the table mappings for the pipeline
     table_mappings = [
         PipelineConfig(
             "SELECT body_id, state_id, role_id, body_name, body_short FROM ls_body",
@@ -172,19 +193,18 @@ def run_data_pipeline():
             True,
         ),
     ]
+
     try:
         for pipeline_config in table_mappings:
             logger.info(f"Updating {pipeline_config.target_orm.__tablename__}")
 
+            # Check if incremental load is enabled and get the timestamp of the last pull
             last_pull_timestamp = None
             if pipeline_config.incremental_load:
-                # Get the timestamp of the last pull
-                last_pull_timestamp = get_last_pull_timestamp(
-                    pipeline_config.target_orm
-                )
+                last_pull_timestamp = get_last_pull_timestamp(pipeline_config.target_orm)
                 logger.info(f"Target table last updated at {last_pull_timestamp}")
 
-            # Get the updated data from MariaDB
+            # Fetch updated data from MariaDB
             logger.info(f"Pulling data from legiscan_api")
             legiscan_data = get_updated_data(
                 source_query=pipeline_config.source_query,
@@ -192,8 +212,8 @@ def run_data_pipeline():
             )
             logger.info(f"Got {len(legiscan_data)} records")
 
+            # Handle parsing bill text
             if pipeline_config.target_orm == orm.Bill:
-                # Create 'text' and 'summary_text' values
                 logger.info(f"Parsing PDF Data")
                 legiscan_data = create_text_and_summary(legiscan_data)
 
