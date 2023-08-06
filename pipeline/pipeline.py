@@ -71,7 +71,6 @@ def get_updated_data(table_config: dict, last_pull_timestamp: datetime = None):
     limit_clause = table_config.get("limit_clause", "")
 
     query = f"{select_clause} {filter_clause} {limit_clause};"
-    print(query)
     data = maria_db.execute_query(query)
 
     return data
@@ -218,6 +217,7 @@ def run_data_pipeline(limit: int = None, state_list: list = None) -> None:
             if pipeline_config["target_orm"] == orm.Bill:
                 logger.info(f"Parsing PDF Data")
                 legiscan_data = create_text_and_summary(legiscan_data)
+                print(legiscan_data[0:3])
 
             # Save the data to Postgres RDS
             logger.info(f"Saving Data to RDS")
@@ -237,4 +237,4 @@ def run_data_pipeline(limit: int = None, state_list: list = None) -> None:
 
 
 if __name__ == "__main__":
-    run_data_pipeline(state_list=["US"], limit=200)
+    run_data_pipeline(state_list=["US"], limit=20)
