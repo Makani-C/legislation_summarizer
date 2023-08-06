@@ -185,6 +185,8 @@ def run_data_pipeline(limit: int = None, state_list: list = None) -> None:
                 "body_id": "body_id",
                 "status_id": "status_id",
                 "state_url": "pdf_link",
+                "text": "text",
+                "summary_text": "summary_text"
             },
             "incremental_load": False,
         },
@@ -217,7 +219,6 @@ def run_data_pipeline(limit: int = None, state_list: list = None) -> None:
             if pipeline_config["target_orm"] == orm.Bill:
                 logger.info(f"Parsing PDF Data")
                 legiscan_data = create_text_and_summary(legiscan_data)
-                print(legiscan_data[0:3])
 
             # Save the data to Postgres RDS
             logger.info(f"Saving Data to RDS")
