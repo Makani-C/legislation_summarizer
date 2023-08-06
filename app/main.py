@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, HTTPException
 from datetime import datetime
 from typing import Optional
 from pydantic import BaseModel
@@ -49,6 +49,18 @@ class Bill(BaseModel):
 
     class Config:
         orm_mode = True
+
+
+@app.get("/health")
+def healthcheck():
+    try:
+        db_connector.execute_query("SELECT * FROM information_schema.tables;")
+        return
+    except Exception as e:
+        raise HTTPException(
+            status_code=422,
+            detail=f"Error connecting to RDS: {e}"
+        )
 
 
 # Define a route to get all bills
