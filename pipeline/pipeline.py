@@ -188,7 +188,7 @@ def run_data_pipeline(limit: int = None, state_list: list = None) -> None:
                 "text": "text",
                 "summary_text": "summary_text"
             },
-            "incremental_load": False,
+            "incremental_load": False, # TODO - implement consistent incremental load pipeline
         },
     }
     if state_list:
@@ -238,4 +238,4 @@ def run_data_pipeline(limit: int = None, state_list: list = None) -> None:
 
 
 if __name__ == "__main__":
-    run_data_pipeline(state_list=["US"], limit=20)
+    run_data_pipeline(state_list=["US"])
