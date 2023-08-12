@@ -71,6 +71,7 @@ def get_updated_data(table_config: dict, last_pull_timestamp: datetime = None):
     limit_clause = table_config.get("limit_clause", "")
 
     query = f"{select_clause} {filter_clause} {limit_clause};"
+    print(query)
     data = maria_db.execute_query(query)
 
     return data
