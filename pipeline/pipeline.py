@@ -141,7 +141,7 @@ def save_data_to_rds(model: orm.Base, field_mapping: dict, data: list) -> None:
             rds_db.close_connection()
 
 
-def run_data_pipeline(limit: int = None, state_list: list = None) -> None:
+def run_data_pipeline(limit: int = None, state_list: list = None, bill_id_list: str = None) -> None:
     """
     Run the data pipeline to update target tables with data from the source.
 
@@ -194,6 +194,9 @@ def run_data_pipeline(limit: int = None, state_list: list = None) -> None:
     if state_list:
         state_list_string = "', '".join(state_list)
         table_mappings["bill"]["filter_clause"] = f"WHERE state_abbr IN ('{state_list_string}')"
+    if bill_id_list:
+        bill_id_list_string = "', '".join(bill_id_list)
+        table_mappings["bill"]["filter_clause"] = f"WHERE bill_id IN ('{bill_id_list_string}')"
     if limit:
         table_mappings["bill"]["limit_clause"] = f"LIMIT {limit}"
 
@@ -238,4 +241,4 @@ def run_data_pipeline(limit: int = None, state_list: list = None) -> None:
 
 
 if __name__ == "__main__":
-    run_data_pipeline(state_list=["US"])
+    run_data_pipeline(bill_id_list=["1748493", "1757049", "1771559", "1759493"])
